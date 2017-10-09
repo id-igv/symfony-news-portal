@@ -1,0 +1,82 @@
+{# app/Resources/views/security/form.registration.html.twig #}
+
+{% extends 'base.html.twig' %}
+
+{% block title %}Регистрация{% endblock %}
+
+{% block menu %}{% endblock %}
+
+{% block body %}
+<style>
+ul li { list-style-type: none }
+</style>
+	<div class="w3-section w3-center">
+		{{ form_errors(form.username) }}
+		{{ form_errors(form.realName) }}
+		{{ form_errors(form.email) }}
+		{{ form_errors(form.plainPassword) }}
+		{% for flashMessage in app.session.flashBag.get('error') %}
+		<div class="w3-container w3-center">{{- flashMessage -}}</div>
+		{% endfor %}
+	</div>
+	
+	<div class="w3-display-container" style="height:380px">
+		<div class="w3-card w3-col l6 m8 w3-display-middle">
+			<div class="w3-bar w3-content">
+				<a class="w3-bar-item w3-mobile w3-left" href="{{ path('homepage') }}">&#8592; Вернутсья к новостям</a>
+				<a class="w3-bar-item w3-mobile w3-right" href="{{ path('login') }}">Войти</a>
+			</div>
+			<br>
+			
+			{{ form_start(form, {
+				'attr': {
+					'class': 'w3-padding'
+				}
+			}) }}
+				<p>
+					{{ form_widget(form.username, {
+						'attr': {
+							'class': 'w3-input w3-padding w3-center w3-border w3-border-black',
+							'placeholder': 'Имя на сайте',
+							'style': 'border-bottom:none;'
+						}
+					}) }}
+				</p>
+				<p>
+					{{ form_widget(form.realName, {
+						'attr': {
+							'class': 'w3-input w3-padding w3-center w3-border w3-border-black',
+							'placeholder': 'Реальное имя',
+							'style': 'border-bottom:none;'
+						}
+					}) }}
+				</p>
+				<p>
+					{{ form_widget(form.email, {
+						'attr': {
+							'class': 'w3-input w3-padding w3-center w3-border w3-border-black',
+							'placeholder': 'Эл. почта',
+							'style': 'border-bottom:none;'
+						}
+					}) }}
+				</p>
+				<p>
+					{{ form_widget(form.plainPassword, {
+						'attr': {
+							'class': 'w3-input w3-padding w3-center w3-border w3-border-black',
+							'placeholder': 'Пароль',
+							'style': 'border-bottom:none;'
+						}
+					}) }}
+				</p>
+				<div class="w3-section w3-center">
+					{{ form_widget(form.register, {
+						'attr': {
+							'class': 'w3-button w3-border w3-black'
+						}
+					}) }}
+				</div>
+			{{ form_end(form) }}
+		</div>
+	</div>
+{% endblock %}

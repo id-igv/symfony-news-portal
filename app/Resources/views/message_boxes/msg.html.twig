@@ -1,0 +1,18 @@
+{# app/Resources/views/message_boxes/msg.html.twig #}
+
+{% extends 'base.html.twig' %}
+
+{% block title %}Внимание{% endblock %}
+{% block menu %}{% endblock %}
+{% block body %}
+<div class="w3-display-container" style="height:100px">
+	<div class="w3-card w3-col l6 m8 w3-display-middle">
+		<div class="w3-bar w3-content">
+			<a class="w3-bar-item w3-mobile w3-left" href="{{ path('login') }}">&#8592; Вход</a>
+			<a href="{{ path('homepage') }}" class="w3-bar-item w3-mobile w3-rest w3-center">Главная</a>
+			<a class="w3-bar-item w3-mobile w3-right" href="{{ path('registration') }}">Регистрация</a>
+		</div>
+		<div class="w3-padding-large w3-large">{{ message }}</div>
+	</div>
+</div>
+{% endblock %}

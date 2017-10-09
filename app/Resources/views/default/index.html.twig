@@ -1,0 +1,95 @@
+{# app/Resources/views/default/index.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block body %}
+	<br>
+    <!--SIDE-SCROLL-->
+    <div class="w3-row">
+        {% for news in lastNews %}
+            <div class="w3-container w3-animate-opacity js-scroller w3-center">
+                <img src="{{ asset(news.titleImage) }}" width="250px" height="250px">
+                <div class="w3-container w3-center">
+                    <p><a href="{{ path('news', {'id': news.id}) }}">
+                        {{- news.title -}}
+                    </a></p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+	<br>
+    <!--CATEGORIES-->
+    <div class="w3-row">
+	
+        <table class="w3-table"><tbody>
+        {% set cell = 0 %}
+        {% for category in categories %}
+            {% if cell == 0 %}
+                <tr>
+            {% endif %}
+            {% set cell = cell + 1 %}
+                <td class="w3-third">
+                <div class="w3-container">
+					<header class="w3-content w3-padding">
+						<h2 class="category-name"><a href="{{ [path('search'), '?categories=', category.category.id]|join }}">
+							{{- category.category.name -}}
+						</a></h2>
+					</header>
+					{% if category.newsList is empty %}
+						<p class="w3-padding w3-text-gray">Новостей данной категории не найдено</p>
+					{% else %}
+						<ul class="news-list w3-ul">
+							{% for news in category.newsList %}
+								<li class="w3-hover-gray">
+									<a href="{{ path('news', {'id': news.id}) }}" style="text-decoration:none;">
+										{{- news.title -}}
+									</a>
+								</li>
+							{% endfor %}
+						</ul>
+					{% endif %}
+                </div>
+                </td>
+            {% if cell == 3 %}
+                </tr>
+                {% set cell = 0 %}
+            {% endif %}
+        {% endfor %}
+        </tbody></table>
+    </div>
+{% endblock %}
+
+{% block footer %}
+	<footer class="w3-container w3-padding w3-text-gray w3-margin-top w3-right">
+		News Portal. Created by <a href="#">GIV</a>, Summer 2017
+	</footer>
+{% endblock %}
+
+{% block stylesheets %}
+	{{ parent() }}
+	<style>
+		* { bos-sizing: border-box; }
+		.news-list li a { display: block; }
+		.category-name a {display:block;}
+		.category-name a:link {text-decoration:none;}
+		.category-name a:hover {text-decoration:underline;}
+	</style>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+    var myIndex = 0;
+    carousel();
+    
+    function carousel() {
+        var i;
+        var x = document.getElementsByClassName("js-scroller");
+        for (i = 0; i < x.length; i++) {
+           x[i].style.display = "none";  
+        }
+        myIndex++;
+        if (myIndex > x.length) {myIndex = 1}    
+        x[myIndex-1].style.display = "block";  
+        setTimeout(carousel, 2000);
+    }
+</script>
+{% endblock %}

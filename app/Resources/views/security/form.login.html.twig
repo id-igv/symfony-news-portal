@@ -1,0 +1,39 @@
+{# app/Resources/views/security/form.login.html.twig #}
+
+{% extends 'base.html.twig' %}
+
+{% block title %}Вход{% endblock %}
+{% block menu %}{% endblock %}
+{% block body %}
+	{#{% for flashMessage in app.session.flashBag.get('error') %}#}
+	{#    {{ flashMessage }}#}
+	{#    <br>#}
+	{#{% endfor %}#}
+	{#<hr>#}
+<div class="w3-display-container" style="height:310px">
+	<div class="w3-card w3-col l6 m8 w3-display-middle">
+		<div class="w3-bar w3-content">
+			<a class="w3-bar-item w3-mobile w3-left" href="{{ path('homepage') }}">&#8592; Вернутсья к новостям</a>
+			<a class="w3-bar-item w3-mobile w3-right" href="{{ path('registration') }}">Регистрация</a>
+		</div>
+		{% if error %}
+			<div class="w3-continer w3-center">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+		{% endif %}
+		<br>
+		<form class="w3-padding" action="{{ path('login') }}" method="post">
+			{# <label for="username">Username:</label> #}
+			<p><input class="w3-input w3-padding w3-center w3-border w3-border-black" style="border-bottom:none;" placeholder="Имя" type="text" id="username" name="_username" value="{{ last_username }}" /></p>
+			
+			{# <label for="password">Password:</label> #}
+			<p><input class="w3-input w3-padding w3-center w3-border w3-border-black" style="border-bottom:none;" placeholder="Пароль" type="password" id="password" name="_password" /></p>
+
+			<div class="w3-section w3-center">
+				<button class="w3-button w3-border w3-black" type="submit">Войти</button>
+			</div>
+			<div class="w3-section w3-center">
+				<a class="w3-small" href="{{ path('request_reset_pwd') }}">Забыли пароль?</a>
+			</div>
+		</form>
+	</div>
+</div>
+{% endblock %}

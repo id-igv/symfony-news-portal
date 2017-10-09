@@ -1,0 +1,86 @@
+{# app/Resource/views/control/news.html.twig #}
+{% extends 'control/base.html.twig' %}
+
+{% block title %}Управление. Новости{% endblock %}
+
+{% block newsMenu %}
+<a href="{{ path('control_news') }}" class="w3-bar-item w3-button" style="padding-left:48px">Постранично</a>
+<a href="{{ path('control_news') }}?count={{ newsCount }}" class="w3-bar-item w3-button" style="padding-left:48px">Показать все</a>
+{#
+<span class="w3-bar-item">Фильтр</span>
+<div class="w3-bar-item">
+<div class="w3-twothird">
+	<input id="js-filter-title" class="w3-input w3-border" placeholder="Поиск по заголовку..." />
+</div>
+<button class="w3-third w3-button">Поиск</button>
+</div>
+#}
+{% endblock %}
+
+{% block body %}
+<table id="js-table" class="w3-table w3-border w3-bordered">
+    <tr>
+        <th class="w3-border-right w3-border-left w3-center w3-black" style="width:10%">ID</th>
+        <th class="w3-border-right w3-border-left w3-center w3-black" style="width:15%">Дата</th></th>
+        <th class="w3-border-right w3-border-left w3-center w3-black" style="width:40%">Заголовок</th></th>
+        <th class="w3-border-right w3-border-left w3-center w3-black" style="width:10%">ID Автор</th></th>
+        <th class="w3-border-right w3-border-left w3-center w3-black" style="width:25%">Управление</th></th>
+    </tr>
+{% for news in newsList %}
+    <tr class="js-table-row w3-hover-light-gray">
+        <td class="js-id w3-border-right w3-border-left w3-center" style="width:10%;vertical-align:middle">{{ news.id }}</td>
+        <td class="js-created w3-border-right w3-border-left w3-center" style="width:15%;vertical-align:middle">{{ news.created|date('Y-m-d') }}</td>
+        <td class="js-title w3-border-right w3-border-left" style="width:40%;vertical-align:middle">{{ news.title }}</td>
+        <td class="js-authorId w3-border-right w3-border-left w3-center" style="width:10%;vertical-align:middle">{{ news.authorId }}</td>
+        <td class="w3-border-right w3-border-left w3-center" style="width:25%;vertical-align:middle">
+			<a href="{{ path("news", {"id": news.id}) }}" target="_blank" class="w3-padding-small w3-button w3-transparent">Страница</a>
+			<a href="{{ path("news_edit", {"id": news.id}) }}" target="_blank" js-edit-id="{{ news.id }}" class="js-edit w3-padding-small w3-button w3-transparent">Изменить</a>
+			<button js-edit-id="{{ news.id }}" class="js-delete w3-padding-small w3-button w3-transparent">Удалить</button>
+        </td>
+    </tr>
+{% endfor %}
+</table>
+
+{# PAGINATION #}
+{% if btnCount > 3 %} 
+	{{ include('pagination.html.twig', {url: path('control_news')}) }}
+{% endif %}
+{% endblock %}
+
+{% block javascripts %}
+<script>
+$( document ).ready( function() {
+    function handleRmSuccess( response ) {
+        var data = JSON.parse( response.data );
+        
+        $( ".js-table-row" ).each( function() {
+            var $this = $(this);
+            if ($this.find(".js-id").text() === data.id) {
+                $this.remove();
+            }
+        });
+        
+        alert('Успешно удалено!');
+    }
+    
+    function handleRmFail() {
+        alert('Не удалось удалить запись!');
+    }
+    
+    $( ".js-delete" ).click( function() {
+        var catId = $( this ).attr("js-edit-id");
+        var data = "id=" + catId;
+        
+        $.ajax({
+            type: 'POST',
+            url: '{{ path("api_news_delete") }}',
+            data: data,
+            statusCode: {
+                200: handleRmSuccess,
+                400: handleRmFail
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

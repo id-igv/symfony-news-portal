@@ -1,0 +1,190 @@
+{# app/Resources/views/search/index.html.twig #}
+
+{% extends 'base.html.twig' %}
+
+{% block body %}
+{# FILTER #}
+    
+{% set contains = false %}
+
+<!--<div class="w3-row">-->
+<div class="w3-content w3-third" style="padding-left:0px;">
+    <div class="w3-center">
+        <button id="js-filter-submit" class="w3-button w3-block w3-hover-black w3-border w3-light-gray">
+            <b>Поиск</b>
+        </button>
+    </div>
+    {# DATE-PICKER #}
+    <div class="w3-container">
+        <h5>Период:</h5>
+        
+        {# set some vars for date picker values #}
+        {% if params.dfrom is defined %}
+            {% set dfromValue = params.dfrom %}
+        {% else %}
+            {% set dfromValue =  '-1 week'|date('Y-m-d') %}
+        {% endif %}
+        {% if params.dto is defined %}
+            {% set dtoValue = params.dto %}
+        {% else %}
+            {% set dtoValue =  'now'|date('Y-m-d') %}
+        {% endif %}
+        {% set datePattern =  '(?:19|20)[0-9]{2}-(?:(?:0[1-9]|1[0-2])-(?:0[1-9]|1[0-9]|2[0-9])|(?:(?!02)(?:0[1-9]|1[0-2])-(?:30))|(?:(?:0[13578]|1[02])-31))' %}
+        {# ######################################## #}
+        
+        <div class="w3-row">
+            От:<input class="w3-input" type="date" id="js-filter-dfrom" value="{{ dfromValue }}" name="dfrom" required pattern="{{ datePattern }}">
+        </div>
+        <div class="w3-row">
+            До:<input class="w3-input" type="date" id="js-filter-dto" value="{{ dtoValue }}" name="dto" required pattern="{{ datePattern }}">
+        </div>
+    </div>
+    
+    {# CATEGORY-LIST #}
+    <div class="w3-container">
+        <h5>Категории:</h5>
+        <ul id="#js-cat-list" class="w3-ul">
+        {% for cat in categories %}
+            {% if params.category_set is defined %}
+                {% set contains = cat.id in params.category_set %}
+            {% endif %}
+            <li class="js-cat-item w3-large w3-padding w3-hover-gray {{ contains ? 'w3-light-gray' : '' }}" js-selected="{{ contains ? 'true' : 'false' }}" js-cat-id="{{ cat.id }}">
+                {{ cat.name }}
+            </li>
+        {% endfor %}
+        </ul>
+    </div>
+    
+    {# TAGS-CLOUD #}
+    <div id="#js-tag-cloud" class="w3-container">
+        <h5>Теги:</h5><p>
+        {% set contains = false %}
+            {% for tag in tags %}
+                {% if params.tag_set is defined %}
+                    {% set contains = tag in params.tag_set %}
+                {% endif %}
+            <span class="js-tag-item w3-tag {{ contains ? 'w3-dark-gray' : 'w3-teal' }} w3-hover-black" style="margin:3px;cursor:pointer;" js-selected="{{ contains ? 'true' : 'false' }}">
+                {{- tag -}}
+            </span>
+        {% endfor %}
+    </p></div>
+</div>
+
+{# NEWS-LIST #}
+<div class="w3-container w3-twothird">
+    <ul class="w3-ul">
+	{% if newsList == null %}
+		<li class="w3-center w3-text-gray">Ничего не найдено</li>
+	{% else %}
+        {% for news in newsList %}
+            <li class="w3-hover-gray">
+			<a style="text-decoration:none;display:block;" href="{{ path('news', {'id': news.id}) }}">
+                {{- news.title -}}
+            </a>
+			</li>
+        {% endfor %}
+	{% endif %}
+    </ul>
+</div>
+
+{# PAGINATION #}
+{% if btnCount > 3 %} 
+	{{ include('pagination.html.twig', {url: path('search')}) }}
+{% endif %}
+{% endblock %}
+
+{% block javascripts %}
+<script>
+$( document ).ready( function() {
+    var selectedCategories = [];
+    var selectedTags = [];
+    
+    $( ".js-cat-item" ).each( function() {
+        var $item = $( this );
+        if ( $item.attr( "js-selected" ) === "true" ) {
+            selectedCategories.push( $item.attr( "js-cat-id" ) );
+        }
+    });
+    
+    $( ".js-tag-item" ).each( function() {
+        var $item = $( this );
+        if ( $item.attr( "js-selected" ) === "true" ) {
+            selectedTags.push( $item.html() );
+        }
+    });
+    
+    $( ".js-cat-item" ).click( function() {
+        var $catItem = $( this );
+        
+        if ( $catItem.attr( "js-selected" ) === "false" ) {
+            selectedCategories.push( $catItem.attr( "js-cat-id" ) );
+            $catItem.addClass( "w3-light-gray" );
+            $catItem.attr( "js-selected", "true" );
+        } 
+        else if ( $catItem.attr( "js-selected" ) === "true" ) {
+            var i = selectedCategories.indexOf( $catItem.attr( "js-cat-id") );
+            selectedCategories.splice(i, 1);
+            
+            $catItem.removeClass( "w3-light-gray" );
+            $catItem.attr( "js-selected", "false" );
+        }
+    });
+    
+    $( ".js-tag-item" ).click( function() {
+        var $tagItem = $( this );
+        
+        if ( $tagItem.attr( "js-selected" ) === "false" ) {
+            selectedTags.push( $tagItem.html() );
+            
+            $tagItem.removeClass( "w3-light-gray" );
+            $tagItem.addClass( "w3-dark-gray" );
+            $tagItem.attr( "js-selected", "true" );
+        } 
+        else if ( $tagItem.attr( "js-selected" ) === "true" ) {
+            var i = selectedTags.indexOf( $tagItem.html() );
+            selectedTags.splice(i, 1);
+            
+            $tagItem.removeClass( "w3-dark-gray" );
+            $tagItem.addClass( "w3-teal" );
+            $tagItem.attr( "js-selected", "false" );
+        }
+    });
+    
+    $( "#js-filter-submit" ).on( "click", function( event ) {
+        event.preventDefault();
+        
+        var dfrom = $( "#js-filter-dfrom" ).val();
+        var dto = $( "#js-filter-dto" ).val();
+        
+        // fill request string
+        var request = ""; // will be used in get method
+        if (selectedCategories.length > 0) {
+            request += "categories=" + selectedCategories.join( "|" );
+        }
+        
+        if (selectedTags.length > 0) {
+            if (request.length > 0) {
+                request += "&";
+            }
+            request += "tags=" + selectedTags.join( "|" );
+        }
+        
+        if (dfrom.length >= 8 && dfrom.length <= 10) {
+            if (request.length > 0) {
+                request += "&";
+            }
+            request += "dfrom=" + dfrom;
+        }
+        
+        if (dto.length >= 8 && dto.length <= 10) {
+            if (request.length > 0) {
+                request += "&";
+            }
+            request += "dto=" + dto;
+        }
+        
+        window.location.assign("{{ path('search') }}?" + request);
+    });
+});
+</script>
+{% endblock %}

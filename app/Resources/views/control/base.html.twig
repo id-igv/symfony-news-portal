@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}Управление{% endblock %}</title>
+    
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {# <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css"> #}
+	<link rel="stylesheet" href="{{ asset('/css/w3.css') }}">
+    
+    {##}
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    {##}
+    
+    <style>
+        .w3-sidebar body {font-family: "Roboto", sans-serif}
+        h1,h2,h3,h4,h5,h6,.w3-wide {font-family: "Montserrat", sans-serif;}
+        .display-nonempty:empty{display:none;}
+    </style>
+</head>
+<body>
+    <div class="w3-row">
+		<div class="w3-sidebar w3-bar-block w3-border" style="width:20%">
+		{% block menu %}
+			{% if is_granted('ROLE_EDITOR') %}
+			<span class="w3-bar-item"><b>Управление данными:</b></span>
+				<a href="{{ path('control_news') }}" class="w3-bar-item w3-button">Новости</a>
+				{% block newsMenu %}{% endblock %}
+				<a href="{{ path('control_categories') }}" class="w3-bar-item w3-button">Категории</a>
+			{% endif %}
+			{% if is_granted('ROLE_ADMIN') %}
+				<span class="w3-bar-item"><b>Управление доступом:</b></span>
+				<a href="{{ path('control_users') }}" class="w3-bar-item w3-button">Пользователи</a>
+				{% block usersMenu %}{% endblock %}
+			{% endif %}
+			<hr>
+			<a href="{{ path('homepage') }}" class="w3-bar-item w3-button">На главную</a>
+		{% endblock %}
+		</div>
+		<div style="margin-left:20%">
+			{% block body %}<h1 class="w3-panel w3-center">Hello, Admin!</h1>{% endblock %}
+		</div>
+    </div>
+    {% block javascripts %}{% endblock %}
+</body>
+</html>

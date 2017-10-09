@@ -1,0 +1,380 @@
+{# app/Resource/views/control/news.edit.html.twig #}
+{% extends 'control/base.html.twig' %}
+
+{% block title %}
+    Управление. Редактирование
+{% endblock %}
+
+{% block menu %}
+	<span class="w3-bar-item"><b>Управление:</b></span>
+	<button class="w3-bar-item w3-button" id="js-preview">Предпросмотр</button>
+	<button class="w3-bar-item w3-button" id="js-save">Сохранить</button>
+	<hr>
+	{% if is_granted('ROLE_EDITOR') %}
+		<a href="{{ path('control_main') }}" class="w3-bar-item w3-button">Панель управления</a>
+	{% endif %}
+	<a href="{{ path('homepage') }}" class="w3-bar-item w3-button">Главная</a>
+	{% if news.id is defined %}
+		<a href="{{ path('news', {'id': news.id}) }}" target="__blank" class="w3-bar-item w3-button">Страница статьи</a>
+	{% endif %}
+{% endblock %}
+
+{% block body %}
+    <div class="w3-panel">
+        <div class="w3-quarter">ID в базе:</div>
+        {% if news.id is defined %}
+            <div id="js-id" class="w3-threequarter">{{ news.id }}</div>
+        {% else %}
+            <div id="js-id" class="w3-threequarter">Отсутствует</div>
+        {% endif %}
+    </div>
+    <div class="w3-panel">
+        <div class="w3-quarter">Автор:</div>
+        {% if author.username is defined %}
+            <div class="w3-threequarter">
+                ID: <span id="js-authorid">{{ author.id }}</span><br>
+                Имя: <span id="js-author">{{ author.username }}</span>
+            </div>
+        {% else %}
+            <div class="w3-threequarter">
+                ID: <span id="js-authorid">{{ app.user.id }}</span><br>
+                Имя: <span id="js-author">{{ app.user.username }}</span>
+            </div>
+        {% endif %}
+    </div>
+    <div class="w3-panel">
+        <div class="w3-quarter">Дата:</div>
+        {% if news.created is defined %}
+            <div id="js-created" class="w3-threequarter">{{ news.created|date('Y-m-d') }}</div>
+        {% else %}
+            <div id="js-created" class="w3-threequarter">{{ "now"|date('Y-m-d') }}</div>
+        {% endif %}
+    </div>
+    <div class="w3-panel">
+        <div class="w3-quarter">Заголовок:</div>
+        <div class="w3-threequarter">
+            {% if news.title is defined %}
+                <input id="js-title" type="text" class="w3-input w3-padding w3-border" value="{{ news.title }}"/>
+            {% else %}
+                <input id="js-title" type="text" class="w3-input w3-border"/>
+            {% endif %}
+        </div>
+    </div>
+    <div class="w3-panel">
+            <div class="w3-quarter">Изображение:</div>
+        <div class="w3-threequarter">
+			<div class="w3-center">
+            {% if news.titleImage is defined %}
+                <img id="js-selected-image" src="{{ asset(news.titleImage) }}" style="max-width:75%;max-height:300px;">
+            {% else %}
+                <img id="js-selected-image" src="#" style="max-width:75%;max-height:300px;">
+            {% endif %}
+			</div>
+			<p><input id="js-image-src" class="w3-input w3-padding w3-border" type="text" name="uploadedFile" placeholder="Вставьте ссылку на изображение и нажмите Enter" value=""/></p>
+        </div>
+    </div>
+    <div class="w3-panel">
+        <div class="w3-quarter">Категория:</div>
+        <div class="w3-threequarter">
+            <select id="js-categories" class="w3-select w3-padding" name="categories">
+                <option value="-1">Не выбрано</option>
+                {% for cat in categories %}
+                {% if news.categoryId is defined and cat.id == news.categoryId %}
+                    <option value="{{ cat.id }}" selected>{{ cat.name }}</option>
+                {% else %}
+                    <option value="{{ cat.id }}">{{ cat.name }}</option>
+                {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="w3-panel">
+            <div class="w3-quarter">Теги:</div>
+        <div class="w3-threequarter">
+            <div class="w3-twothird">
+            {% if news.tagSet is defined %}
+                <input class="w3-input w3-padding w3-border" type="text" placeholder="Теги статьи" id="js-tagset" value="{{ news.tagSet }}" />
+            {% else %}
+                <input class="w3-input w3-padding w3-border" type="text" id="js-tagset" />
+            {% endif %}
+            </div>
+            
+            <div class="w3-third w3-dropdown-click">
+                <input class="w3-input w3-padding w3-border" type="text" placeholder="Поиск тегов" id="js-tagfilter" />
+                    <ul class="w3-ul w3-dropdown-content w3-bar-block w3-card-2" id="js-tagcloud">
+                    {% for tag in tags %}
+                        <li class="w3-bar-item w3-hover-black" style="cursor:pointer;">{{ tag }}</li>
+                    {% endfor %}
+                    </ul>
+            </div>
+        </div>
+    </div>
+    <div class="w3-panel">
+        <div class="w3-quarter"><span class="">Текст статьи:</span></div>
+        <div class="w3-threequarter">
+            {% if news.content is defined %}
+                <textarea id="js-content" class="w3-input w3-border w3-padding" rows="15" style="resize:none;">{{ news.content }}</textarea>
+            {% else %}
+                <textarea id="js-content" class="w3-input w3-border w3-padding" rows="15" style="resize:none;"></textarea>
+            {% endif %}
+        </div>
+    </div>
+
+{# NEWS-PREVIEW #}
+<div id="js-previewbox" class="w3-modal">
+<div class="w3-modal-content">
+<div class="w3-container">
+    <span id="js-close-preview" class="w3-button w3-display-topright">&times;</span>
+    <div class="w3-row">
+        <!--HEADER-->
+        <div class="w3-panel">
+            <h1 id="js-preview-title"></h1>
+            <span class="w3-left">
+                Автор: 
+                <a id="js-preview-author" href="#"></a>
+            </span>
+            <span id="js-preview-created" class="w3-right"></span>
+        </div>
+        
+        <!--TAGS-->
+        <div id="js-preview-tags" class="w3-panel"></div>
+        
+        <!--IMAGE-AND-CONTENT-->
+        <div class="w3-panel">
+            <div class="w3-center"><img id="js-preview-img" class="w3-padding-24" style="max-width:75%;max-height:300px;" src="#"></img></div>
+            <div id="js-preview-content" class="w3-large"></div>
+        </div>
+    </div>
+</div>
+</div>
+</div>
+
+{# PROGRESS DIALOG #}
+<div id="js-progress" class="w3-modal">
+<div class="w3-modal-content w3-light-gray" style="width:450px;max-height:700px">
+<div class="w3-container w3-center">
+	<div class="w3-panel w3-xxlarge w3-center">
+		<i id="js-icon-wait" class="w3-xxlarge w3-spin fa fa-spinner"></i>
+		<i id="js-icon-success" class="w3-xxlarge fa fa-check" style="color:green;"></i>
+		<i id="js-icon-fail" class="w3-xxlarge fa fa-warning" style="color:red;"></i>
+	</div>
+	<div class="w3-panel w3-xlarge w3-center" id="js-progress-msg"></div>
+	<div class="w3-panel w3-center">
+		<button class="w3-button w3-border" id="js-progress-close" onclick="$('#js-progress').hide();">Закрыть</button>
+	</div>
+</div>
+</div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+$( document ).ready( function()
+{
+    function handleSuccess( response )
+	{
+        var data = JSON.parse( response.data );
+		
+		// alert("Отправлено!\n");
+		$( "#js-icon-wait" ).hide();
+		$( "#js-icon-fail" ).hide();
+		$( "#js-progress-close" ).show();
+		$( "#js-icon-success" ).show();
+		$( "#js-id" ).text( data.newsId );
+		
+		var container = $( "#js-progress-msg" );
+		container.empty();
+		container.text( "Сохранено!" );
+    }
+    
+    function handleFail( response )
+	{
+		var data = JSON.parse( response.data );
+		
+		$( "#js-icon-wait" ).hide();
+		$( "#js-icon-success" ).hide();
+		$( "#js-progress-close" ).show();
+		$( "#js-icon-fail" ).show();
+		
+		var container = $( "#js-progress-msg" );
+		container.empty();
+		container.text( data.errorMsg );
+    }
+    
+	function showProgress()
+	{
+		$( "#js-progress-close" ).hide();
+		$( "#js-icon-success" ).hide();
+		$( "#js-icon-fail" ).hide();
+		$( "#js-progress-msg" ).text( "Подождите..." );
+		$( "#js-progress" ).show();
+	}
+	
+	function badData( msg ) {
+		$( "#js-icon-wait" ).hide();
+		$( "#js-icon-success" ).hide();
+		$( "#js-progress-close" ).show();
+		$( "#js-icon-fail" ).show();
+	
+		var container = $( "#js-progress-msg" );
+		//container.text( '' );
+		container.empty();
+		container.append( msg );
+	}
+	
+    $( "#js-save" ).click( function() {
+		showProgress();
+	
+		var canSave = true;
+		var progressMsg = '';
+	
+        var data = {
+            id: 0,
+            title: "",
+            categoryId: 0,
+            authorId: 0,
+            created: "",
+            titleImage: "", 
+            content: "",
+            tagSet: ""
+        };
+        
+        // check fields
+        var id = parseInt( $( "#js-id" ).text() );
+        var title = $( "#js-title" ).val().trim();
+        if (title.length < 8) {
+            progressMsg = "<p>Поле заголовка содержит меньше 8 символов.</p>";
+            canSave = false;
+        }
+        
+        var categoryId = parseInt( $( "#js-categories" ).val() );
+        if (categoryId < 1) {
+            progressMsg += "<p>Укажите категорию новости.</p>";
+			canSave = false;
+        }
+        
+        var authorId = parseInt( $( "#js-authorid" ).text() );
+        var created = $( "#js-created" ).text();
+        
+		var titleImage = $( "#js-image-src" ).val().trim();
+		
+        var content = $( "#js-content" ).val().trim();
+        if (content.length < 24) {
+            progressMsg += "<p>Текст статьи содержит меньше 24 символов.</p>";
+			canSave = false;
+        }
+        
+        var tagSet = $( "#js-tagset" ).val().trim();
+        if (tagSet.split(";").length >= 8) {
+            progressMsg += "<p>Количество тегов должно быть от 1 до 8</p>";
+			canSave = false;
+        }
+		
+		if ( canSave === false ) {
+			badData( progressMsg );
+			return;
+		}
+        
+        // fill in post data
+        data.id = (isNaN(id)) ? 0 : id;
+        data.title = title;
+        data.categoryId = categoryId;
+        data.authorId = authorId;
+        data.created = created;
+        data.titleImage = titleImage;
+        data.content = content;
+        data.tagSet = tagSet;
+        
+        // set json data
+        data = "data=" + JSON.stringify(data);
+        console.log(data);
+        
+        // send data
+        $.ajax({
+                type: 'POST',
+                url: '{{ path("api_news_update") }}',
+                data: data,
+                statusCode: {
+                    200: handleSuccess,
+                    400: handleFail
+                }
+            });
+    });
+    
+    $( "#js-preview" ).click( function() {
+        $( "#js-preview-title" ).text( $( "#js-title" ).val() );
+        $( "#js-preview-author" ).text( $( "#js-author" ).text() );
+        $( "#js-preview-created" ).text( $( "#js-created" ).text() );
+        // $( "#js-preview-created" ).text( $( "#js-created" ).text() );
+        
+        var tagSet = $( "#js-tagset" ).val().split(" ");
+        tagSet.forEach( function(tag) {
+            $( "#js-preview-tags" )
+                .append("\<a class=\"w3-tag w3-teal\" href=\"#\"\>" +
+                tag + "\<\/a\> ");
+        });
+        
+		var imageSrc = $( "#js-image-src" ).val().trim();
+		if ( imageSrc.length == 0 ) {
+			imageSrc = $( "#js-selected-image" ).attr( "src" );
+		}
+		$( "#js-preview-img" ).attr( "src", imageSrc );
+		
+        $( "#js-preview-content" ).text( $( "#js-content" ).val() );
+        
+        $( "#js-previewbox" ).show();
+    });
+    
+    $( "#js-close-preview" ).click( function() {
+        $( "#js-preview-tags" ).html("");
+        $( "#js-previewbox" ).hide();
+    });
+    
+    $( "#js-tagfilter" ).on({
+        focus: function() {
+            $( "#js-tagcloud" ).addClass("w3-show");
+            // $( "#js-tagcloud" ).focus();
+        },
+        
+        // blur: function() {
+        //     $( "#js-tagcloud" ).removeClass("w3-show");
+        // },
+    
+        keyup: function() {
+            var input, filter, ul, li, a, i;
+            input = document.getElementById("js-tagfilter");
+            
+            filter = input.value.toUpperCase();
+            ul = document.getElementById("js-tagcloud");
+            li = ul.getElementsByTagName("li");
+            for (i = 0; i < li.length; i++) {
+                if (li[i].innerHTML.toUpperCase().indexOf(filter) > -1) {
+                    li[i].style.display = "";
+                } else {
+                    li[i].style.display = "none";
+                }
+            }
+        }
+    });
+    
+    $( "#js-tagcloud" ).on({
+        mouseleave: function() {
+            $( "#js-tagcloud" ).removeClass("w3-show");
+        }
+    });
+    
+    $( "#js-tagcloud li" ).on({
+        click: function() {
+            if ($( "#js-tagset" ).val().indexOf($( this ).text()) == -1) {
+                $( "#js-tagset" ).val( $( "#js-tagset" ).val() + ";" + $( this ).text() );
+                $( "#js-tagcloud" ).removeClass("w3-show");
+            }
+        }
+    });
+	
+	$( "#js-image-src" ).change( function() {
+        $( "#js-selected-image" ).attr( "src", $( "#js-image-src" ).val().trim());
+	});
+});
+</script>
+{% endblock %}

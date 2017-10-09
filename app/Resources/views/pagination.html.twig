@@ -1,0 +1,85 @@
+{# app/Resources/views/pagination.html.twig #}
+
+<div class="w3-center w3-margin-top"><div class="w3-bar">
+    {% if btnCount < 6 %}
+        {% for button in pagination.buttons %}
+            {% if button.isActive %}
+                <a class="w3-button w3-bar-item" href="{{ url ~ '?' ~ getParams ~ 'page=' ~ button.page }}">
+                    {{ button.text }}
+                </a>
+            {% else %}
+                <span class="w3-button w3-bar-item">{{ button.text }}</span>
+            {% endif %}
+        {% endfor %}
+    {% else %}
+        {% if pagination.buttons[0].isActive %}
+            <a class="w3-button w3-bar-item" href="{{ url ~ '?' ~ getParams ~ 'page=' ~ pagination.buttons[0].page }}">
+                {{ pagination.buttons[0].text }}
+            </a>
+        {% else %}
+            <span class="w3-button w3-bar-item">
+                {{ pagination.buttons[0].text }}
+            </span>
+        {% endif %}
+        {% if pagination.buttons[1].isActive %}
+            <a class="w3-button w3-bar-item" href="{{ url ~ '?' ~ getParams ~ 'page=' ~ pagination.buttons[1].page }}">
+                {{ pagination.buttons[1].text }}
+            </a>
+        {% else %}
+            <span class="w3-button w3-bar-item">
+                {{ pagination.buttons[1].text }}
+            </span>
+        {% endif %}
+        
+        <div class="w3-dropdown-click">
+            <button id="js-more-pages" class="w3-button">...</button>
+            <table id="js-pages" class="w3-dropdown-content">
+            {% set openedtr = 2 %}
+            {% for i in 2..(btnCount - 3) %}
+                {% if i == openedtr %}
+                    <tr>
+                {% endif %}
+                    <td><a class="w3-button w3-bar-item" href="{{ url ~ '?' ~ getParams ~ 'page=' ~ pagination.buttons[i].page }}">
+                        {{ pagination.buttons[i].text }}
+                    </a></td>
+                {% if (i - openedtr) == 5 %}
+                    </tr>
+                {% set openedtr = i + 1 %}
+                {% endif %}
+            {% endfor %}
+            </table>
+        </div>
+        
+        {% if pagination.buttons[btnCount-2].isActive %}
+            <a class="w3-button w3-bar-item" href="{{ url ~ '?' ~ getParams ~ 'page=' ~ pagination.buttons[btnCount-2].page }}">
+                {{ pagination.buttons[btnCount-2].text }}
+            </a>
+        {% else %}
+            <span class="w3-button w3-bar-item">
+                {{ pagination.buttons[btnCount-2].text }}
+            </span>
+        {% endif %}
+        {% if pagination.buttons[btnCount-1].isActive %}
+            <a class="w3-button w3-bar-item" href="{{ url ~ '?' ~ getParams ~ 'page=' ~ pagination.buttons[btnCount-1].page }}">
+                {{ pagination.buttons[btnCount-1].text }}
+            </a>
+        {% else %}
+            <span class="w3-button w3-bar-item">
+                {{ pagination.buttons[btnCount-1].text }}
+            </span>
+        {% endif %}
+        
+    {% endif %}
+</div></div>
+
+<script>
+$( "#js-more-pages" ).click( function() {
+        var x = document.getElementById("js-pages");
+        
+        if (x.className.indexOf("w3-show") == -1) {
+            x.className += " w3-show";
+        } else {
+            x.className = x.className.replace(" w3-show", "");
+        }
+    });
+</script>

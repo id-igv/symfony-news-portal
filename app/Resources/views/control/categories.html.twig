@@ -1,0 +1,197 @@
+{# app/Resource/views/control/categories.html.twig #}
+{% extends 'control/base.html.twig' %}
+
+{% block title %}
+    Управление. Категории
+{% endblock %}
+
+{% block body %}
+<!--EDIT-PANEL-->
+
+<!--RECORDS-->
+<div class="w3-panel">
+<table id="js-table" class="w3-table w3-border w3-bordered">
+	<tr>
+        <th class="w3-border-right w3-border-left w3-center w3-black" style="width:10%">ID</th>
+        <th class="w3-border-right w3-border-left w3-center w3-black" style="width:65%">Наименование</th>
+        <th class="w3-border-right w3-border-left w3-center w3-black" style="width:25%">Управление</th>
+    </tr>
+	<tr class="w3-light-gray">
+		<td class="w3-border-right w3-border-left" style="width:10%">
+            <input id="js-edit-cat-id" class="w3-light-gray w3-input w3-border w3-center" type="text" name="" placeholder="ID" readonly/>
+        </td>
+        <td class="w3-border-right w3-border-left" style="width:65%">
+            <input id="js-edit-cat-name" class="w3-light-gray w3-input w3-border" type="text" placeholder="Категория..." name=""/>
+        </td>
+        <td class="w3-border-right w3-border-left w3-center" style="width:25%;vertical-align:middle">
+            <button id="js-apply" class="w3-button w3-padding-small">Применить</button>
+            <button id="js-add" class="w3-button w3-padding-small">Добавить</button>
+			<button id="js-clear-inputs" class="w3-button w3-padding-small">Очистить</button>
+        </td>
+	<tr>
+{% for cat in categories %}
+    <tr class="js-table-row w3-hover-light-gray">
+        <td class="js-id w3-border-right w3-border-left w3-center" style="width:10%;vertical-align:middle">{{ cat.id }}</td>
+        <td class="js-name w3-border-right w3-border-left" style="width:65%;vertical-align:middle">{{ cat.name }}</td>
+        <td class="w3-border-right w3-border-left w3-center" style="width:25%;vertical-align:middle">
+            <span js-edit-id="{{ cat.id }}" class="js-delete w3-padding-small w3-button w3-transparent">
+                Удалить
+            </span>
+        </td>
+    </tr>
+{% endfor %}
+</table>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+    $( document ).ready( function() {
+        // used for coloring input borders in red on fail
+        function onFail() {
+            $( "#js-edit-cat-name" ).addClass( "w3-border-red" );
+            setTimeout(function() {
+                $( "#js-edit-cat-name" ).removeClass( "w3-border-red" );
+            }, 2500);
+        }
+        
+        // used for coloring input borders in green on success
+        function onSuccess() {
+            $( "#js-edit-cat-name" ).addClass( "w3-border-green" );
+            setTimeout(function() {
+                $( "#js-edit-cat-name" ).removeClass( "w3-border-green" );
+            }, 2500);
+        }
+        
+        function handleUpdateSuccess(response) {
+            var data =  JSON.parse( response.data );
+            
+            onSuccess();
+            
+            $( ".js-table-row" ).each( function() {
+                var $this = $(this);
+                if ($this.find(".js-id").text() === data.id) {
+                    $this.find(".js-name").text(data.name);
+                }
+            });
+            
+            console.log( data.updated );
+        }
+        
+        function handleUpdateFail(response) {
+            console.log('Failed to update');
+            onFail();
+        }
+        
+        function handleRmSuccess(response) {
+            var data = response.data;
+            data = JSON.parse( data );
+            
+            onSuccess();
+            
+            $( ".js-table-row" ).each( function() {
+                var $this = $(this);
+                if ($this.find(".js-id").text() === data.id) {
+                    // $this.addClass( "js-should-rm" );
+                    $this.remove();
+                }
+            });
+            
+            console.log( data.id );
+        }
+        
+        function handleRmFail( response ) {
+            console.log( 'Failed to remove' );
+            onFail();
+        }
+        
+        function handleAddSuccess( response ) {
+            var data = response.data;
+            data = JSON.parse( data );
+            // console.log( data );
+            onSuccess();
+            
+            $( "#js-table" ).append("\<tr class=\"js-table-row\">" +
+                    "\<td class=\"js-id w3-border-right w3-border-left w3-center\" style=\"width:10%\"\>" +
+                    data.id + 
+                    "<\/td>" + 
+                    "\<td class=\"js-name w3-border-right w3-border-left\" style=\"width:65%\"\>" + 
+                    data.name + 
+                    "\<\/td\>" +
+                    "\<td class=\"w3-border-right w3-border-left w3-center\" style=\"width:25%\"\>"+
+                    "\<span js-edit-id='" + 
+                    data.id + 
+                    "' class=\"js-delete w3-button w3-transparent w3-hover-black\"\>Удалить\<\/span\>" +
+                    "\<\/td\>\<\/tr\>"
+            );
+        }
+        
+        function handleAddFail(response) {
+            console.log('fail');
+            onFail();
+        }
+        
+        $("#js-table").on( "click", ".js-delete", function() {
+            var catId = $( this ).attr("js-edit-id");
+            var data = "id=" + catId;
+            
+            $.ajax({
+                type: 'POST',
+                url: '{{ path("api_category_delete") }}',
+                data: data,
+                statusCode: {
+                    200: handleRmSuccess,
+                    400: handleRmFail
+                }
+            });
+        });
+        
+        $("#js-add").click( function() {
+            var catName = $( "#js-edit-cat-name" ).val();
+            var data = "name=" + catName;
+            
+            $.ajax({
+                type: 'POST',
+                url: '{{ path("api_category_add") }}',
+                data: data,
+                statusCode: {
+                    200: handleAddSuccess,
+                    400: handleAddFail
+                }
+            });
+        });
+        
+        $("#js-table").on( "click", ".js-table-row", function() {
+            var selected = $(this);
+            var editId = $("#js-edit-cat-id");
+            var editName = $("#js-edit-cat-name");
+            
+            editId.val( selected.find( ".js-id" ).text() );
+            editName.val( selected.find( ".js-name" ).text() );
+        });
+        
+        $("#js-apply").click( function() {
+            var catId = $( "#js-edit-cat-id" ).val();
+            var catName = $( "#js-edit-cat-name" ).val();
+            var data = "id=" + catId + "&name=" + catName;
+            
+            console.log(data);
+            $.ajax({
+                type: 'POST',
+                url: '{{ path("api_category_update") }}',
+                data: data,
+                statusCode: {
+                    200: handleUpdateSuccess,
+                    400: handleUpdateFail
+                }
+            });
+        });
+		
+		$( "#js-clear-inputs" ).click( function ()
+		{
+			$( "#js-edit-cat-id" ).val( '' );
+			$( "#js-edit-cat-name" ).val( '' );
+		});
+    });
+</script>
+{% endblock %}

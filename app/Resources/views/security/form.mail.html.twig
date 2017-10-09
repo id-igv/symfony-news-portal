@@ -1,0 +1,28 @@
+{# app/Resources/views/security/form.mail.html.twig #}
+
+{% extends 'base.html.twig' %}
+
+{% block title %}Почта{% endblock %}
+{% block menu %}{% endblock %}
+{% block body %}
+<div class="w3-display-container" style="height:310px">
+	<div class="w3-card w3-col l6 m8 w3-display-middle">
+		<div class="w3-bar w3-content">
+			<a class="w3-bar-item w3-mobile w3-left" href="{{ path('login') }}">&#8592; Вход</a>
+			<a href="{{ path('homepage') }}" class="w3-bar-item w3-mobile w3-rest w3-center">Главная</a>
+			<a class="w3-bar-item w3-mobile w3-right" href="{{ path('registration') }}">Регистрация</a>
+		</div>
+		{% if message is defined %}
+			<div class="w3-content w3-center w3-padding-24">{{ message }}</div>
+		{% endif %}
+		<br>
+		<form class="w3-padding" action="{{ path('request_reset_pwd') }}" method="get">
+			<input class="w3-input w3-padding w3-center w3-border w3-border-black" style="border-bottom:none;" placeholder="Ваш эл. адресс..." type="email" name="email" />
+			
+			<div class="w3-section w3-center">
+				<button class="w3-button w3-border w3-black" type="submit">Отправить</button>
+			</div>
+		</form>
+	</div>
+</div>
+{% endblock %}

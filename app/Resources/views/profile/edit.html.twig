@@ -1,0 +1,464 @@
+{# app/Resources/views/profile/edit.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Профиль. Редактирование{% endblock %}
+
+{% block body %}
+	{% if is_granted("IS_AUTHENTICATED_FULLY") %}
+	{% if user.id == app.user.id %}
+	<div class="w3-row">
+		<h3 class="w3-padding w3-center">Управление</h3>
+		
+		{# AVATAR MENU #}
+		<div class="w3-border">
+			<h4 class="w3-padding">Персональные данные:</h4>
+			<button id="js-select-realname" class="w3-button w3-block w3-border-bottom">Изменить имя</button>
+			<div id="js-realname-form" class="w3-hide w3-padding w3-light-gray">
+				<input class="w3-input w3-border w3-center w3-padding w3-margin-top" type="text" name="realname" placeholder="Введите новое имя..." />
+				<div class="w3-center w3-margin-top"><button id="js-change-realname" class="w3-hover-black w3-button w3-border">Применить</button></div>
+			</div>
+			{% if user.viewed != null %}
+				<button id="js-clear-history" class="w3-button w3-block w3-border-bottom">Очистить историю новостей</button>
+			{% else %}
+				<button id="js-clear-history" class="w3-button w3-block w3-border-bottom" disabled>Очистить историю новостей</button>
+			{% endif %}
+			{% if user.deferred != null %}
+				<button id="js-clear-bookmarks" class="w3-button w3-block w3-border-bottom">Очистить закладки</button>
+			{% else %}
+				<button id="js-clear-bookmarks" class="w3-button w3-block w3-border-bottom" disabled>Очистить закладки</button>
+			{% endif %}
+			<h4 class="w3-padding">Настройка аватара:</h4>
+			<div class="w3-center w3-panel w3-medium">
+				<img id="js-profile-avatar" src="{{ user.avatar == null ? asset('img/profiles/standart/standart') : asset(user.avatar) }}" width="250px" height="250px"/>
+				<div><i id="js-spinner" class="fa fa-spinner w3-hide" style="font-size:72px"></i></div>
+			</div>
+			{#
+			<button id="js-select-standart" class="w3-button w3-block w3-border-bottom">Выбрать стандартный аватар</button>
+			<div id="js-av-standart" class="w3-hide w3-padding w3-light-gray">
+			{% if avatars != null %}
+				{% for avatar in avatars %}
+					<img src="{{ asset(avatar) }}" width="100px" height="100px"/>
+				{% endfor %}
+			{% else %}
+				<p class="w3-medium w3-text-gray w3-center">
+					Стандартных картинок для аватара еще не завезли
+				</p>
+			{% endif %}
+			</div>
+			#}
+			<button id="js-select-link" class="w3-button w3-block w3-border-bottom">Загрузить изображение по ссылке</button>
+			<div id="js-av-link" class="w3-hide w3-padding w3-light-gray">
+				<input id="js-image-url" class="w3-input w3-border w3-center w3-padding w3-margin-top" type="url" name="imageUrl" placeholder="Место для вставки ссылки..." />
+				<div class="w3-center w3-margin-top">
+					<button id="js-upload-link" class="w3-hover-black w3-button w3-border">Загрузить</button>
+				</div>
+			</div>
+			<button id="js-select-local" class="w3-button w3-block w3-border-bottom">С локального диска</button>
+			<div id="js-av-local" class="w3-hide w3-padding w3-light-gray w3-center">
+				<div class="w3-padding">Выбрать изображение:</div>
+				<div class="w3-threequarter"><input id="js-file" class="w3-input w3-border" type="file" name="fileToUpload" id="fileToUpload"></div>
+				<div class="w3-center">
+					<button id="js-upload-local" class="w3-hover-black w3-button w3-border">Загрузить</button>
+				</div>
+			</div>
+		</div>
+		
+		{# AUTH DETAILS #}
+		<div class="w3-border w3-margin-top">
+			<h4 class="w3-padding">Параметры входа:</h4>
+			<a href="{{ path('request_reset_pwd') }}?email={{ user.email }}" id="js-select-pwd" class="w3-button w3-block w3-border-bottom">Изменение пароля</a>
+			<button id="js-select-mail" class="w3-button w3-block w3-border-bottom">Изменение почты</button>
+			<div id="js-mail-form" class="w3-hide w3-padding w3-light-gray">
+				<input class="w3-input w3-border w3-center w3-padding w3-margin-top" type="mail" name="newMail" placeholder="Введите новый почтовый адресс..." />
+				<input class="w3-input w3-border w3-center w3-padding w3-margin-top" type="password" name="plainPassword" placeholder="Для подтверждения введите пароль..." />
+				<input class="w3-input w3-border w3-center w3-padding w3-margin-top" type="password" name="repeatedPlainPassword" placeholder="Повторите пароль..." />
+				<div class="w3-center w3-margin-top"><button id="js-change-mail" class="w3-hover-black w3-button w3-border">Применить</button></div>
+			</div>
+		</div>
+		
+		{# SUBSCRIBTION DETAILS #}
+		<div class="w3-border w3-margin-top">
+			<h4 class="w3-padding">Параметры оповещения:</h4>
+			<button id="js-select-sub" class="w3-button w3-block w3-border-bottom">Подписка</button>
+			<div id="js-sub-form" class="w3-hide w3-padding w3-light-gray w3-center">
+				<select id="js-sub-list" name="categoryList[]" multiple class="w3-border">
+				{% for cat in categories %}
+					<option class="w3-medium w3-padding w3-border-bottom" value="{{ cat.id }}" {{ cat.id in subList ? "selected" : "" }}>{{- cat.name -}}</option>
+				{% endfor %}
+				</select>
+				<div class="w3-center w3-margin-top">
+					<button id="js-change-sub" class="w3-hover-black w3-button w3-border">Сохранить</button>
+					<button id="js-unsub" class="w3-hover-black w3-button w3-border" {{ subList is empty ? "disabled" : "" }}>Отписаться</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	{% endif %}
+	{% endif %}
+{% endblock %}
+
+{% block javascripts %}
+<script>
+$( document ).ready( function() {
+	function validateMailForm( mail, pwd, repeatedPwd )
+	{
+		var isValid = true;
+		elemsToAlert = [];
+		if ( mail.val().length < 3 ) {
+			elemsToAlert.push( mail );
+			isValid = false;
+		}
+		if ( pwd.val().length == 0 ) {
+			elemsToAlert.push( pwd );
+			isValid = false;
+		}
+		if ( repeatedPwd.val().length == 0 ) {
+			elemsToAlert.push( repeatedPwd );
+			isValid = false;
+		}
+		if ( pwd.val() !== repeatedPwd.val() ) {
+			if ( elemsToAlert.indexOf( repeatedPwd ) == -1 ) {
+				elemsToAlert.push( repeatedPwd );
+			}
+			if ( elemsToAlert.indexOf( pwd ) == -1 ) {
+				elemsToAlert.push( pwd );
+			}
+			isValid = false;
+		}
+		
+		alertElems( elemsToAlert );
+		return isValid;
+	}
+	
+	function startSpinner( elem )
+	{
+		elem.prop( "disabled", true );
+		// start spinner
+		
+		$( "#js-spinner" ).removeClass( "w3-hide" );
+		$( "#js-spinner" ).addClass( "w3-spin" );
+	}
+	
+	function stopSpinner( elem )
+	{
+		// stop spinner
+		$( "#js-spinner" ).removeClass( "w3-spin" );
+		$( "#js-spinner" ).addClass( "w3-hide" );
+		
+		elem.prop( "disabled", false);
+	}
+	
+	function alertElems( elems )
+	{
+		var len = elems.length;
+		for (var i = 0; i < len; i++) {
+			elems[i].toggleClass( "w3-border-red" );
+		}
+		
+		setTimeout( function() {
+			for (var i = 0; i < len; i++) {
+				elems[i].toggleClass( "w3-border-red" );
+			}
+		}, 1500);
+	}
+	
+	function alertElem( elem )
+	{
+		elem.toggleClass( "w3-border-red" );
+		setTimeout( function() {
+			elem.toggleClass( "w3-border-red" );
+		}, 1500);
+	}
+	
+	$( "#js-select-standart" ).click( function() 
+	{
+		$( "#js-av-standart" ).toggleClass( "w3-hide" );
+	});
+	
+	$( "#js-select-link" ).click( function() 
+	{
+		$( "#js-av-link" ).toggleClass( "w3-hide" );
+	});
+	
+	$( "#js-select-local" ).click( function() 
+	{
+		$( "#js-av-local" ).toggleClass( "w3-hide" );
+	});
+	
+	$( "#js-select-mail" ).click( function() 
+	{
+		$( "#js-mail-form" ).toggleClass( "w3-hide" );
+	});
+	
+	$( "#js-select-realname" ).click( function() 
+	{
+		$( "#js-realname-form" ).toggleClass( "w3-hide" );
+	});
+	
+	$( "#js-select-sub" ).click( function() 
+	{
+		$( "#js-sub-form" ).toggleClass( "w3-hide" );
+	});
+	
+	$( "#js-upload-link" ).click( function() 
+	{
+		var clickedBtn = $( this );
+		var urlField = $( "#js-image-url" );
+		var data = "url=" + urlField.val();
+		
+		if ( urlField.val().length < 3) {
+			alertElem( urlField );
+			return;
+		}
+		
+		$( "#js-profile-avatar" ).hide();
+		startSpinner( clickedBtn );
+		
+		$.ajax({
+                type: 'POST',
+                url: '{{ path("api_av_upload_link") }}',
+                data: data,
+                statusCode: {
+                    200: function( response ) {
+						//alert('ok');
+						var imgUrl = JSON.parse( response.data );
+						imgUrl = imgUrl.imgUrl;
+						$( "#js-profile-avatar" ).attr( "src", imgUrl );
+						stopSpinner( $( "#js-upload-link" ) );
+						$( "#js-profile-avatar" ).show();
+						$( "#js-image-url" ).val( "" );
+					},
+                    400: function( response ) {
+						stopSpinner( $( "#js-upload-link" ) );
+						$( "#js-profile-avatar" ).show();
+						alertElem( $( "#js-image-url" ) );
+						alert( "Ошибка при загрузке картинки!" );
+					}
+                }
+            });
+	});
+	
+	$( "#js-upload-local" ).click( function( event )
+	{
+		var fileInput = $( "#js-file" );
+		
+		if ( fileInput[0].files.length !== 1 ) {
+			alertElem( fileInput );
+			return;
+		}
+		var clickedBtn = $( this );
+		startSpinner( clickedBtn );
+		
+		var data = new FormData();
+		data.append( "profile_av", fileInput[0].files[0] );
+		
+		$.ajax({
+                type: 'POST',
+				enctype: 'multipart/form-data',
+                url: '{{ path("api_av_upload_local") }}',
+                data: data,
+				processData: false,
+				contentType: false,// 'multipart/form-data',
+				cache: false,
+                statusCode: {
+                    200: function( response ) {
+						//alert('ok');
+						var imgUrl = JSON.parse( response.data );
+						imgUrl = imgUrl.imgUrl;
+						$( "#js-profile-avatar" ).attr( 'src', imgUrl );
+						stopSpinner( clickedBtn );
+					},
+                    400: function( response ) {
+						stopSpinner( $( "#js-upload-link" ) );
+						alertElem( $( "#js-file" ) );
+						alert( "Ошибка при загрузке картинки!" );
+					}
+                }
+            });
+	});
+	
+	$( "#js-change-mail" ).click( function( event )
+	{
+		$( "#js-change-mail" ).prop( "disabled", true );
+		var data = '';
+		var newMail = $( "input[name='newMail']" );
+		var plainPassword = $( "input[name='plainPassword']" );
+		var repeatedPlainPassword = $( "input[name='repeatedPlainPassword']" );
+		
+		if (!validateMailForm( newMail, plainPassword, repeatedPlainPassword )) {
+			$( "#js-change-mail" ).prop( "disabled", false );
+			return;
+		}
+		
+		data = newMail.serialize() + 
+			'&' + plainPassword.serialize() + 
+			'&' + repeatedPlainPassword.serialize();
+		
+		$.ajax({
+			type: 'POST',
+			url: '{{ path("reset_mail") }}',
+			data: data,
+			statusCode: {
+				200: function ( response ) {
+					$( "#js-change-mail" ).prop( "disabled", false );
+					var data = JSON.parse( response.data );
+					newMail.val( '' );
+					plainPassword.val( '' );
+					repeatedPlainPassword.val( '' );
+					alert( data.msg );
+				},
+				400: function () {
+					$( "#js-change-mail" ).prop( "disabled", false );
+					alert('Указанная почта занята!');
+				},
+				406: function () {
+					$( "#js-change-mail" ).prop( "disabled", false );
+					alert('Неверные данные!');
+				},
+				500: function () {
+					$( "#js-change-mail" ).prop( "disabled", false );
+					alert('Ошибка сохранения!');
+				}
+			}
+		});
+	});
+	
+	$( "#js-change-realname" ).click( function( event )
+	{
+		var data = '';
+		var nameInput = $( "input[name='realname']" );
+		
+		if ( nameInput.val().length < 1 ) {
+			alertElem( nameInput );
+			return;
+		}
+		
+		$( "#js-change-realname" ).prop( "disabled", true );
+		data = nameInput.serialize();
+		
+		$.ajax({
+			type: 'POST',
+			url: '{{ path("api_profile_edit") }}',
+			data: data,
+			statusCode: {
+				200: function ( response ) {
+					var data = JSON.parse( response.data );
+					nameInput.val( '' );
+					$( "#js-change-realname" ).prop( "disabled", false );
+					alert( data.msg );
+				},
+				400: function () {
+					$( "#js-change-realname" ).prop( "disabled", false );
+					alert('Введенны неверные данные!');
+				},
+				500: function () {
+					$( "#js-change-realname" ).prop( "disabled", false );
+					alert('Ошибка сохранения!');
+				}
+			}
+		});
+	});
+	
+	$( "#js-clear-history" ).click( function( event )
+	{
+		$( this ).prop( "disabled", true );
+		
+		$.ajax({
+			type: 'GET',
+			url: '{{ path("api_news_history_clear") }}',
+			statusCode: {
+				200: function ( response ) {
+					var data = JSON.parse( response.data );
+					alert( data.msg );
+				},
+				400: function () {
+					$( "#js-clear-history" ).prop( "disabled", false );
+					alert('Ошибка авторизации! Перезайдите в учетную запись и попробуйте снова.');
+				},
+				500: function () {
+					$( "#js-clear-history" ).prop( "disabled", false );
+					alert('Ошибка сохранения!');
+				}
+			}
+		});
+	});
+	
+	$( "#js-clear-bookmarks" ).click( function( event )
+	{
+		$( this ).prop( "disabled", true );
+		
+		$.ajax({
+			type: 'GET',
+			url: '{{ path("api_bookmarks_clear") }}',
+			statusCode: {
+				200: function ( response ) {
+					var data = JSON.parse( response.data );
+					alert( data.msg );
+				},
+				400: function () {
+					$( "#js-clear-bookmarks" ).prop( "disabled", false );
+					alert('Ошибка авторизации! Перезайдите в учетную запись и попробуйте снова.');
+				},
+				500: function () {
+					$( "#js-clear-bookmarks" ).prop( "disabled", false );
+					alert('Ошибка сохранения!');
+				}
+			}
+		});
+	});
+	
+	$( "#js-change-sub" ).click( function( event )
+	{
+		var data = $( "#js-sub-list" ).serialize();
+		console.log(data);
+		$( "#js-change-sub" ).prop( "disabled", true );
+		
+		$.ajax({
+			type: 'POST',
+			url: '{{ path("api_subscribe") }}',
+			data: data,
+			statusCode: {
+				200: function ( response ) {
+					$( "#js-unsub" ).prop( "disabled", false );
+					$( "#js-change-sub" ).prop( "disabled", false );
+					var data = JSON.parse( response.data );
+					alert( data.msg );
+				},
+				400: function () {
+					$( "#js-change-sub" ).prop( "disabled", false );
+					alert('Неверные данные!');
+				},
+				500: function () {
+					$( "#js-change-sub" ).prop( "disabled", false );
+					alert('Ошибка сохранения!');
+				}
+			}
+		});
+	});
+	
+	$( "#js-unsub" ).click( function( event )
+	{
+		$( "#js-unsub" ).prop( "disabled", true );
+		
+		$.ajax({
+			type: 'GET',
+			url: '{{ path("api_unsubscribe") }}',
+			statusCode: {
+				200: function ( response ) {
+					var data = JSON.parse( response.data );
+					alert( data.msg );
+				},
+				400: function () {
+					$( "#js-unsub" ).prop( "disabled", false );
+					alert('Неверные данные!');
+				},
+				500: function () {
+					$( "#js-unsub" ).prop( "disabled", false );
+					alert('Ошибка сохранения!');
+				}
+			}
+		});
+	});
+});
+</script>
+{% endblock %}

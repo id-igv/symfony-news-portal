@@ -1,0 +1,405 @@
+{# app/Resources/views/news/index.html.twig #}
+
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ news.title }}{% endblock %}
+
+{% block editLink %}
+{% if is_granted('ROLE_EDITOR') or author.id == app.user.id %}
+	<a href="{{ path('news_edit', {'id': news.id}) }}" class="w3-bar-item w3-button">Редактировать статью</a>
+{% endif %}
+{% endblock %}
+
+{% block body %}
+<div class="w3-row">
+    <!--HEADER-->
+    <div class="w3-panel">
+        <h1>{{ news.title }}</h1>
+        <span class="w3-left">
+            Автор: 
+            <a href="{{ path('profile', {'id': author.getId()}) }}">
+                {{ author.getUsername() }}
+            </a>
+        </span>
+        <span class="w3-right">{{ news.created|date('Y-m-d') }}</span>
+    </div>
+    
+    <!--TAGS-->
+    <div class="w3-panel">
+        {% set tags = news.tagSet|split(';') %}
+        {% for tag in tags %}
+            <a class="w3-tag w3-teal" href="{{ [path('search'), '?tags=', tag]|join }}">{{ tag }}</a>
+        {% endfor %}
+    </div>
+    
+    <!--IMAGE-AND-CONTENT-->
+    <div class="w3-panel">
+        <div class="w3-center">
+			<img class="w3-padding-24" src="{{ asset(news.titleImage) }}" style="max-width:75%;max-height:300px;"></img>
+		</div>
+        <div class="w3-large">{{ news.content }}</div>
+    </div>
+	
+	<div class="w3-panel">
+		<span class="w3-margin-left w3-padding w3-right"><i class="icon fa fa-eye"></i> {{ news.totalViews }}</span>
+		{% if is_granted('IS_AUTHENTICATED_FULLY') %}
+			<span id="js-remember" js-news-id="{{ news.id }}" class="w3-margin-left w3-padding w3-right w3-border-bottom w3-border-white w3-hover-border-black" style="cursor:pointer;">
+				<i class="icon fa fa-bookmark"></i> 
+				<span id="js-remember-text">
+				{% if isDeferred is defined %}
+					Сохранено
+				{% else %}
+					Запомнить
+				{% endif %}
+				</span>
+			</span>
+		{% endif %}
+	</div>
+</div>
+
+{# COMMENTS #}
+<div class="w3-row">
+
+    {# LIST OF COMMENTS #}
+    <div id="js-commentlist" class="w3-panel">
+		{% if commentsCount == 0 %}
+			<div id="js-nocomments" class="w3-center w3-padding">Комментариев к данной статье еще не оставили</div>
+		{% else %}
+			<div class="w3-large">
+				<button js-comments-page="1" id="js-upload-comments" class="w3-button w3-hover-black w3-padding" style="cursor:pointer;">Показать комментарии ({{- commentsCount -}}):</button>
+			</div>
+		{% endif %}
+		
+		{# ################################################ #}
+		{# COMMENT TEMPLATE #}
+		<div id="js-comment-template" class="w3-hide">
+			<div class="js-comment-container" style="margin-bottom:5px;margin-top:5px;">
+			{# COMMENT DATA #}
+				<div class="js-comment-meta w3-container w3-light-gray w3-padding">
+					<span class="w3-left">
+						<a class="js-comment-author" href="{{ path('profile', {'id': '[id]'}) }}" js-user-id=""></a>
+					</span>
+					{# CONTROL BUTTONS #}
+					{% if is_granted('ROLE_MOD') %}
+						<div class="w3-dropdown-hover w3-right">
+							<span class="js-control w3-border-bottom w3-border-black" style="margin-right:5px;cursor:pointer">...</span>
+							<div class="w3-dropdown-content w3-bar-block">
+								<button class="js-control-edit w3-button w3-bar-item">Редактировать</button>
+								<button class="js-control-rm w3-button w3-bar-item" js-comment-id="">Удалить</button>
+							</div>
+						</div>
+					{% endif %}
+					{% if is_granted('IS_AUTHENTICATED_FULLY') %}
+						<span class="js-answer w3-border-bottom w3-border-black w3-right" style="margin-right:5px;cursor:pointer;" js-comment-id="">Ответить</span>
+					{% endif %}
+					{# <span class="js-copy w3-border-bottom w3-border-black w3-right" style="margin-right:5px;cursor:pointer">Цитировать</span> #}
+					<span class="js-comment-date w3-right" style="margin-right:15px;"></span>
+				</div>
+				<div class="js-comment-content w3-container w3-padding-16" style="border-right:1px solid;border-left:1px solid;border-bottom:1px solid;border-color:#f1f1f1;"></div>
+			{# ANSWERS BELOW #}
+				<div class="js-answerslist" style="margin-left:3.5%;"></div>
+			</div>
+		</div>
+		{# END OF COMMENT TEMPLATE #}
+		{# ################################################ #}
+    </div>
+	
+	
+    {# SEND COMMENT #}
+    <div class="w3-panel">
+		{% if is_granted('ROLE_USER') %}
+			<div style="margin-top:16px;margin-bottom:16px">
+			<textarea id="js-comment-text" class="w3-input w3-border w3-padding" rows="5" style="resize:none;"></textarea>
+			</div>
+			<div class="w3-center">
+				<button id="js-send-comment" class="w3-button w3-gray">Отправить</button>
+			</div>
+		{% else %}
+			<div class="w3-center w3-padding">
+				Оставить комментарии могут только зарегистрированные пользователи!
+			</div>
+		{% endif %}
+    </div>
+</div>
+{# dump(dump_str) #}
+{# dump(dump_comments) #}
+{% endblock %}
+
+{% block javascripts %}
+<script>
+$( document ).ready( function() {
+	// stores user comment data
+	var commentData = {
+		newsId: {{ news.id }},
+		userId: {{ is_granted('IS_AUTHENTICATED_FULLY') ? app.user.id : 0 }},
+		username: "{{ is_granted('IS_AUTHENTICATED_FULLY') ? app.user.username : null }}",
+		content: '',
+		parentId: 0
+	};
+	
+	// for comments upload
+	var structure = null;
+	var comments = [];
+	var users = [];
+	var containerTemplate = $( "#js-comment-template" ).find( ".js-comment-container" );
+	
+	function timestampToDate( timestamp )
+	{
+		var date  = new Date( timestamp * 1000 );
+		
+		return date.getFullYear() + "/"
+			+ date.getMonth() + "/"
+			+ date.getDate() + " "
+			+ date.getHours() + ":"
+			+ date.getMinutes() + ":"
+			+ date.getSeconds();
+	}
+	
+	function updateCommentData()
+	{
+		commentData.content = $( "#js-comment-text" ).val();
+	}
+	
+	// use for displaying using template in HTML-code
+	// commentId - id from comments tree
+	// commentRecord - record from DB
+	function display( id, parent )
+	{
+		//var userlink = ;
+		var commentContainer = containerTemplate.clone();
+		commentContainer.prop( "id", id );
+		commentContainer.find( ".js-answer" ).first().attr( "js-comment-id", id );
+		commentContainer.find( ".js-control-rm" ).first().attr( "js-comment-id", id );
+		
+		var author = commentContainer.find( ".js-comment-author" ).first();
+		// username
+		author.text( users[comments[id].userId].username );
+		// userlink
+		author.attr( "href", users[comments[id].userId].url );
+		// comment date
+		commentContainer.find( ".js-comment-date" ).first().text( timestampToDate( comments[id].date ) );
+		// comment content
+		var content = commentContainer.find( ".js-comment-content" ).first();
+		content.text( comments[id].content );
+		if (comments[id].isRemoved) {
+			content.addClass("w3-small");
+			content.addClass("w3-text-gray");
+		}
+		
+		if ( parent == 0 ) {
+			$( "#js-commentlist" ).append( commentContainer );
+		}
+		else if ( parent > 0 ) {
+			$( "#" + parent ).find( ".js-answerslist" ).first().append( commentContainer );
+		}
+	}
+	
+	// i know its dumb way of displaying but it is too late to rework this shit
+	// pls contact me (ofc u won't) if u had troubles with this
+	function displayComment( comment, parent )
+	{
+		var commentContainer = containerTemplate.clone();
+		commentContainer.prop( "id", "tmp-comment" );
+		
+		var author = commentContainer.find( ".js-comment-author" ).first();
+		// username
+		author.text( comment.username );
+		// userlink
+		author.attr( "href", generateUserUrl( comment.userId ) );
+		// comment content
+		var content = commentContainer.find( ".js-comment-content" ).first();
+		content.text( comment.content );
+		if (comment.isRemoved) {
+			content.addClass("w3-small");
+			content.addClass("w3-text-gray");
+		}
+		
+		if ( parent == 0 ) {
+			$( "#js-commentlist" ).append( commentContainer );
+		}
+		else if ( parent > 0 ) {
+			$( "#" + parent ).find( ".js-answerslist" ).first().append( commentContainer );
+		}
+	}
+	
+	// use for walk through all comments in comments tree u got from server
+	function walk( comment, parentId )
+	{
+		if (comment.commentId != 0) {
+			display( comment.commentId, parentId );
+		}
+		
+		if (comment.answers.length == 0) {
+			return;
+		}
+		
+		for (i in comment.answers) {
+			walk( comment.answers[i], comment.commentId );
+		}
+	}
+	
+	function alertCommentForm( color )
+	{
+		$( "#js-comment-text" ).addClass( "w3-border-" + color );
+		setTimeout(function() {
+			$( "#js-comment-text" ).removeClass( "w3-border-" + color );
+		}, 1000);
+	}
+	
+	function handleSendingSuccess( response )
+	{
+		$( "#js-send-comment" ).prop( 'disabled', false );
+		$( "#js-comment-text" ).val( '' );
+		var displayedComment = $( "#tmp-comment" );
+		var data = JSON.parse( response.data );
+		
+		// change-list: ID, DATE
+		displayedComment.find( ".js-answer" ).first().attr( "js-comment-id", data.comment.id );
+		displayedComment.find( ".js-control-rm" ).first().attr( "js-comment-id", data.comment.id );
+		displayedComment.find( ".js-comment-date" ).first().text( timestampToDate( data.comment.date ) );
+		displayedComment.prop( "id", data.comment.id );
+		
+		alertCommentForm( 'green' );
+		$( "js-comment-text" ).val( "" );
+	}
+	
+	function handleSendingFail( response )
+	{
+		$( "#js-send-comment" ).prop( 'disabled', false );
+		alert( "Произошла ошибка!" );
+		
+		$( "#tmp-comment" ).remove();
+	}
+	
+	function handleUploadingSuccess( response )
+	{
+		$( "#js-upload-comments" ).prop( 'disabled', false );
+		var data = JSON.parse( response.data );
+		structure = data.structure;
+		comments = data.comments;
+		users = data.users;
+		
+		$( "#js-nocomments" ).hide();
+		$( ".js-comment-container" ).remove();
+		
+		walk( structure.root, 0 );
+	}
+	
+	function handleUploadingFail( response )
+	{
+		$( "#js-upload-comments" ).prop( 'disabled', false );
+		alert("Произошла ошибка!");
+	}
+	
+	function handleCommentRmSuccess( response )
+	{
+		var data = JSON.parse( response.data );
+		
+		console.log( data.comment );
+		
+		var content = $( "#" + data.comment.id ).find( ".js-comment-content" ).first();
+		content.text( data.comment.content );
+		if (data.comment.isRemoved) {
+			content.addClass( "w3-small w3-text-gray" );
+		}
+	}
+	
+	function handleCommentRmFail( response )
+	{
+		console.log( response.data );
+		var data = JSON.parse( response.data );
+		
+		alert( data.errorMsg );
+	}
+	
+	function handleRememberSuccess( response )
+	{
+		var data = JSON.parse( response.data );
+		
+		$( "#js-remember-text" ).text( data.msg );
+	}
+	
+	function handleRememberFail( response )
+	{
+		var data = JSON.parse(response.data);
+		alert( data.errorMsg );
+	}
+	
+	function generateUserUrl( userId )
+	{
+		var baseUrl = "{{ path('profile', {'id': '[id]'}) }}";
+		
+		return baseUrl.replace( "[id]", userId );
+	}
+	
+	$( "#js-send-comment" ).click( function() {
+		$( "#js-send-comment" ).prop( 'disabled', true );
+		// console.log(data);
+		updateCommentData();
+		
+		if ( commentData.content.length < 3 ) {
+			alertCommentForm('red');
+			$( "#js-send-comment" ).prop( 'disabled', false );
+			return;
+		}
+		
+		// display without id
+		displayComment(commentData, commentData.parentId);
+		
+		$.ajax({
+                type: 'POST',
+                url: '{{ path("comments_add") }}',
+                data: 'data=' + JSON.stringify(commentData),
+                statusCode: {
+                    200: handleSendingSuccess,
+                    400: handleSendingFail
+                }
+            });
+	});
+		
+	$( "#js-commentlist" ).on( "click", ".js-answer", function() {
+		commentData.parentId = parseInt( $( this ).attr( "js-comment-id" ) );
+		$( "#js-comment-text" ).focus();
+	});
+	
+	$( "#js-upload-comments" ).click( function() {
+		$( "#js-upload-comments" ).prop( 'disabled', true );
+		var page = parseInt($( this ).attr('js-comments-page'));
+		
+		$.ajax({
+                type: 'GET',
+                url: '{{ path("commentary_list", {"id": news.id}) }}',
+                statusCode: {
+                    200: handleUploadingSuccess,
+                    400: handleUploadingFail
+                }
+            });
+	});
+
+	$( "#js-commentlist" ).on( "click", ".js-control-rm", function() {
+		$.ajax({
+                type: 'POST',
+                url: '{{ path("comments_rm") }}',
+				data: 'id=' + $( this ).attr( "js-comment-id" ),
+                statusCode: {
+                    200: handleCommentRmSuccess,
+                    400: handleCommentRmFail
+				}
+            });
+	});
+	
+	$( "#js-remember" ).click( function() {
+		$.ajax({
+                type: 'POST',
+                url: '{{ path("api_bookmark_edit") }}',
+				data: 'id=' + $( this ).attr( "js-news-id" ),
+                statusCode: {
+                    200: handleRememberSuccess,
+                    400: handleRememberFail
+				}
+            });
+	});
+	
+});
+</script>
+{% endblock %}

@@ -1,0 +1,32 @@
+{# app/Resources/views/profile/comments.html.twig #}
+
+{% extends 'profile/index.html.twig' %}
+
+{% block stylesheets %}
+	{{ parent() }}
+	<style>
+		.comment-container {border-right:1px solid;border-left:1px solid;border-bottom:1px solid;border-color:#f1f1f1;}
+		
+	</style>
+{% endblock %}
+
+{% block title %}Профиль. Комментарии{% endblock %}
+
+{% block tab %}
+	{% if comments != null %}
+		{% for comment in comments %}
+		<div class="w3-panel">
+			{# COMMENT DATA #}
+			<div class="w3-container w3-light-gray w3-padding-16">
+				<span class="w3-left">
+					<a href="{{ path('profile', {'id': user.id}) }}">{{- user.username -}}</a> / 
+					{{- ' ' ~ comment.date|date('Y-m-d') -}}
+				</span>
+			</div>
+			<div class="comment-content w3-container w3-padding-16">{{- comment.content -}}</div>
+		</div>
+		{% endfor %}
+	{% else %}
+		<p class="w3-padding-large w3-medium w3-text-gray">Список комментариев пуст</p>
+	{% endif %}
+{% endblock %}

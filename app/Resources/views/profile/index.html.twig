@@ -1,0 +1,68 @@
+{# app/Resources/views/profile/index.html.twig #}
+
+{% extends 'base.html.twig' %}
+
+{% block stylesheets %}
+	{{ parent() }}
+	<style>
+		
+	</style>
+{% endblock %}
+
+{% block title %}Профиль{% endblock %}
+
+{% block body %}
+
+<div class="w3-row">
+	<div class="w3-row w3-section">
+		<div class="w3-quarter w3-padding w3-center">
+			<img src="{{ user.avatar == null ? asset('img/profiles/standart/standart') : asset(user.avatar) }}" width="150px" height="150px"/>
+		</div>
+		<div class="w3-threequarter w3-padding">
+			<p><b>Имя на сайте:</b> {{ user.username }}</p>
+			<p><b>Реальное имя:</b> {{ user.realName }}</p>
+			<p><b>E-mail:</b> {{ user.email }}</p>
+			<p><b>Зарегестрирован:</b> {{ user.regDate|date('Y-m-d') }}</p>
+		</div>
+
+	</div>
+	
+	<div id="profile-menu" class="w3-bar w3-border-top w3-border-gray w3-large">
+		<a href="{{ path('profile', {'id': user.id}) }}" class="w3-bar-item w3-topbar w3-border-white w3-hover-border-gray w3-hover-light-gray">
+			Закладки
+		</a>
+		<a href="{{ path('profile_news', {'id': user.id}) }}" class="w3-bar-item w3-topbar w3-border-white w3-hover-border-gray w3-hover-light-gray">
+			Публикации
+		</a>
+		<a href="{{ path('profile_comm', {'id': user.id}) }}" class="w3-bar-item w3-topbar w3-border-white w3-hover-border-gray w3-hover-light-gray">
+			Комментарии
+		</a>
+		{% if is_granted("IS_AUTHENTICATED_FULLY") and user.id == app.user.id %}
+			<a href="{{ path('profile_history', {'id': user.id}) }}" class="w3-bar-item w3-topbar w3-border-white w3-hover-border-gray w3-hover-light-gray">
+				История
+			</a>
+			<a href="{{ path('profile_edit', {'id': user.id}) }}" class="w3-bar-item w3-topbar w3-border-white w3-hover-border-gray w3-hover-light-gray">
+				Управление
+			</a>
+		{% endif %}
+	</div>
+	
+	{% block tab %}
+		{% if deferred != null %}
+			<ul>
+			{% for news in deferred %}
+				<li>
+					<a href="{{ path('news', {'id': news.id}) }}" style="display:block;">
+						{{- news.title -}}
+					</a>
+				</li>
+			{% endfor %}
+			</ul>
+		{% else %}
+			<p class="w3-padding-large w3-medium w3-text-gray">Список отложенных статей пуст</p>
+		{% endif %}
+	{% endblock %}
+
+</div>
+
+{% endblock %}

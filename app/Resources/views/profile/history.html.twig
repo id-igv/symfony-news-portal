@@ -1,0 +1,28 @@
+{# app/Resources/views/profile/history.html.twig #}
+
+{% extends 'profile/index.html.twig' %}
+
+{% block stylesheets %}
+	{{ parent() }}
+	<style>
+		
+	</style>
+{% endblock %}
+
+{% block title %}Профиль. Просмотренные{% endblock %}
+
+{% block tab %}
+{% if viewed != null %}
+	<ul>
+	{% for news in viewed %}
+		<li>
+			<a href="{{ path('news', {'id': news.id}) }}" style="display:block;">
+				{{- news.title -}}
+			</a>
+		</li>
+	{% endfor %}
+	</ul>
+{% else %}
+	<p class="w3-padding-large w3-medium w3-text-gray">Список просмотренных статей пуст</p>
+{% endif %}
+{% endblock %}

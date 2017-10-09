@@ -1,0 +1,28 @@
+{# app/Resources/views/security/form.mail.html.twig #}
+
+{% extends 'base.html.twig' %}
+
+{% block title %}Почта{% endblock %}
+{% block menu %}{% endblock %}
+{% block body %}
+<div class="w3-display-container" style="height:310px">
+	<div class="w3-card w3-col l6 m8 w3-display-middle">
+<!------MODAL-SUBSCRIBE-FORM--------------------------------------------------->        		
+		<form action="{{ path('subscribe') }}" method="post" class="w3-container w3-white w3-center">
+			<h2 class="w3-wide">Подпишись</h2>
+			<input class="w3-input w3-border" type="email" placeholder="E-mail" name="email">
+			<select name="categories" multiple>
+				{% for %}
+				{% endfor %}
+			</select>
+			<button type="submit" class="w3-button w3-padding-large w3-red" >Подписаться</button>
+		</form>
+<!----------------------------------------------------------------------------->
+	</div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+</script>
+{% endblock %}

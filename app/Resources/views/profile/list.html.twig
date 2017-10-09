@@ -1,0 +1,27 @@
+{# app/Resources/views/profile/index.html.twig #}
+
+{% extends 'base.html.twig' %}
+
+{% block title %}Пользователи{% endblock %}
+
+{% block body %}
+
+<div class="w3-row">
+	<div class="w3-panel">
+	{% if users != null %}
+		<ul class="w3-ul">
+		{% for user in users %}
+			<li class="w3-hover-dark-gray">
+				<a href="{{ path('profile', {'id': user.id}) }}" style="display:block;">
+					{{- user.username -}}
+				</a>
+			</li>
+		{% endfor %}
+		</ul>
+	{% else %}
+		<p class="w3-medium w3-text-gray">Список зарегестрированных пользователей пуст</p>
+	{% endif %}
+	</div>
+</div>
+
+{% endblock %}

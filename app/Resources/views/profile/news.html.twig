@@ -1,0 +1,28 @@
+{# app/Resources/views/profile/news.html.twig #}
+
+{% extends 'profile/index.html.twig' %}
+
+{% block stylesheets %}
+	{{ parent() }}
+	<style>
+		
+	</style>
+{% endblock %}
+
+{% block title %}Профиль. Публикации{% endblock %}
+
+{% block tab %}
+	{% if news != null %}
+		<ul>
+		{% for article in news %}
+			<li>
+				<a href="{{ path('news', {'id': article.id}) }}" style="display:block;">
+					{{- article.title -}}
+				</a>
+			</li>
+		{% endfor %}
+		</ul>
+	{% else %}
+		<p class="w3-padding-large w3-medium w3-text-gray">Статей этого пользователя пока нет</p>
+	{% endif %}
+{% endblock %}
