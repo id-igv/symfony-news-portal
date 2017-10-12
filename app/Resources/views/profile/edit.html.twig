@@ -220,7 +220,6 @@ $( document ).ready( function() {
                 data: data,
                 statusCode: {
                     200: function( response ) {
-						//alert('ok');
 						var imgUrl = JSON.parse( response.data );
 						imgUrl = imgUrl.imgUrl;
 						$( "#js-profile-avatar" ).attr( "src", imgUrl );
@@ -228,7 +227,7 @@ $( document ).ready( function() {
 						$( "#js-profile-avatar" ).show();
 						$( "#js-image-url" ).val( "" );
 					},
-                    400: function( response ) {
+                    400: function() {
 						stopSpinner( $( "#js-upload-link" ) );
 						$( "#js-profile-avatar" ).show();
 						alertElem( $( "#js-image-url" ) );

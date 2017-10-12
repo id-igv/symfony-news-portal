@@ -93,6 +93,7 @@ class News
 	
 	public function __construct()
 	{
+		$this->isRemoved = false;
 		$this->totalViews = 0;
 	}
 

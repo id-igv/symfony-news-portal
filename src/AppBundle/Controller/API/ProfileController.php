@@ -19,7 +19,7 @@ class ProfileController extends Controller
 		return new JsonResponse(['data' => $data], 200);
 	}
 	
-	/**
+    /**
      * @Route("/api/profile/edit/realname", name="api_profile_edit")
      */
     public function editAction(Request $request)
@@ -173,7 +173,7 @@ class ProfileController extends Controller
 		], 200);
 	}
 	
-	/**
+    /**
      * Avatar is uploaded from URL
      * @Route("/api/avatar/linkupload", name="api_av_upload_link")
      */
@@ -181,7 +181,6 @@ class ProfileController extends Controller
 	{
 		$logger = $this->container->get('logger');
 		if (!$this->get('security.authorization_checker')->isGranted('IS_AUTHENTICATED_FULLY')) {
-			$logger->info('line: 112');
 			return new JsonResponse([], 400);
 		}
 		
@@ -190,45 +189,25 @@ class ProfileController extends Controller
 		
 		$url = $request->request->get('url');
 		if (!$url) {
-			$logger->info('line: 125');
-			return new JsonResponse([
-				'data' => json_encode([
-					'errorMsg' => 'Не указана ссылка на изображение!'
-				])
-			], 400);
+			return new JsonResponse([], 400);
 		}
 		
 		if (false === ($imagePath = $this->get('app.uploader')
 				->uploadFromUrl($url))) {
-			$logger->info('line: 135');
-			return new JsonResponse([
-				'data' => json_encode([
-					'errorMsg' => 'Ошибка при сохранении данных!'
-				])
-			], 400);
+				return new JsonResponse([], 500);
 		}
 		
 		$crntImagePth = $this->getUser()->getAvatar();
-		if ($crntImagePth != '') {
+		if ($crntImagePth != '' && false === strpos($crntImagePth, $this->getParameter('standart_av_dir'))) {
 			// deleting old image
 			$fullCrntPath = realpath($crntImagePth);
 			if ($fullCrntPath === false && $fullCrntPath !== '') {
-				$logger->info('line: 145');
-				return new JsonResponse([
-					'data' => json_encode([
-						'errorMsg' => 'Ошибка при смене аватара!'
-					])
-				], 400);
+				return new JsonResponse([], 500);
 			}
 			
 			file_put_contents($fullCrntPath, ''); // clearing file content
 			if(!unlink($fullCrntPath)) {
-				$logger->info('line: 155');
-				return new JsonResponse([
-					'data' => json_encode([
-						'errorMsg' => 'Ошибка при смене аватара!'
-					])
-				], 400);
+				return new JsonResponse([], 500);
 			}
 			// end of deleting
 		}
@@ -236,12 +215,7 @@ class ProfileController extends Controller
 		try {
 			$this->getDoctrine()->getManager()->flush();
 		} catch (\Doctrine\ORM\ORMException $e) {
-			$logger->info('line: 168');
-			return new JsonResponse([
-				'data' => json_encode([
-					'errorMsg' => 'Ошибка при сохранении данных!'
-				])
-			], 400);
+			return new JsonResponse([], 500);
 		}
 		
 		return new JsonResponse([
@@ -258,11 +232,7 @@ class ProfileController extends Controller
     public function avUploadLocalAction(Request $request)
 	{
 		if (!$this->get('security.authorization_checker')->isGranted('IS_AUTHENTICATED_FULLY')) {
-			return new JsonResponse([
-				'data' => json_encode([
-					'errorMsg' => 'Войдите на сайт!
-				'])
-			], 400);
+			return new JsonResponse([], 400);
 		}
 		
 		$imagePath = '';
@@ -271,35 +241,23 @@ class ProfileController extends Controller
 		$file = $request->files->get('profile_av');
 		
 		if (!$file) {
-			return new JsonResponse([
-				'data' => json_encode([
-					'errorMsg' => 'Не получен файл изображения!'
-				])
-			], 400);
+			return new JsonResponse([], 400);
 		}
 		
 		$imagePath = $this->get('app.uploader')
 			->saveUploaded($file);
 		
 		$crntImagePth = $this->getUser()->getAvatar();
-		if ($crntImagePth != '') {
+		if ($crntImagePth != '' && false === strpos($crntImagePth, $this->getParameter('standart_av_dir'))) {
 			// deleting old image
 			$fullCrntPath = realpath($crntImagePth);
 			if ($fullCrntPath === false) {
-				return new JsonResponse([
-					'data' => json_encode([
-						'errorMsg' => 'Ошибка при смене аватара!'
-					])
-				], 400);
+				return new JsonResponse([], 500);
 			}
 			
 			file_put_contents($fullCrntPath, ''); // clearing file content
 			if(!unlink($fullCrntPath)) {
-				return new JsonResponse([
-					'data' => json_encode([
-						'errorMsg' => 'Ошибка при смене аватара!'
-					])
-				], 400);
+				return new JsonResponse([], 500);
 			}
 			// end of deleting
 		}
@@ -307,11 +265,7 @@ class ProfileController extends Controller
 		try {
 			$this->getDoctrine()->getManager()->flush();
 		} catch (\Doctrine\ORM\ORMException $e) {
-			return new JsonResponse([
-				'data' => json_encode([
-					'errorMsg' => 'Ошибка при сохранении данных!'
-				])
-			], 400);
+			return new JsonResponse([], 500);
 		}
 		
 		return new JsonResponse([

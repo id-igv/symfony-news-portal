@@ -16,29 +16,14 @@
     
 	{# SEARCH-BAR AJAX #}
 	<script>
-		$( document ).ready( function() {
-			function handleBarSuccess( response ) {
-				var data = response.data;
-				console.log( data );
-				
-				$("#js-search-tags").empty();
-				
-				data.forEach( function( element ) {
-					var tag = JSON.parse( element );
-					$( "#js-search-tags" ).append( "<a class='w3-bar-item w3-button' href='" + tag.url + "'>" + tag.name + "</a>" ); 
-				});
-				
-				// $( "#js-search-tags" ).show();
-				$( "#js-search-tags" ).addClass( "w3-show" );
-			}
+	$( document ).ready( function() {
+		function handleBarSuccess( response ) {	var data = response.data;$("#js-search-tags").empty();data.forEach( function( element ) {var tag = JSON.parse( element );$( "#js-search-tags" ).append( "<a class='w3-bar-item w3-button' href='" + tag.url + "'>" + tag.name + "</a>" );});$( "#js-search-tags" ).addClass( "w3-show" );}
 			
-			function handleBarFail( response ) {
-				$( "#js-search-tags" ).empty();
-				$( "#js-search-tags" ).append( "<li>Ничего не найдено</li>" );
-				$( "#js-search-tags" ).show();
-			}
+		function handleBarFail( response ) { $( "#js-search-tags" ).empty();$( "#js-search-tags" ).append( "<span class=\"w3-bar-item\">Ничего не найдено</span>" );$( "#js-search-tags" ).addClass( "w3-show" );}
 			
-			$( "#js-search" ).on( {
+		$( "#js-search" ).on({ 
+			focus: function () { if ( $( this ).val().length >= 2 ) {var data = $( this ).serialize();$.ajax({type: 'POST',	url: '{{ path("searchbar") }}',	data: data,status: {200: handleBarSuccess,400: handleBarFail}});}},
+
 				keyup: function( event ) {
 					if ( $( "#js-search" ).val().length >= 2 ) {
 						var data =  $( this ).serialize();
@@ -52,17 +37,23 @@
 								404: handleBarFail
 							}
 						});
+					} else {
+						$( "#js-search-tags" ).empty();
+						//$( "#js-search-tags" ).hide();
+						$( "#js-search-tags" ).removeClass( "w3-show" );
 					}
 				},
 				
 				blur: function( event ) {
-					if ( $( "#js-search" ).val().length > 0) {
-						$( "#js-search" ).val('');
-						// $( "#js-search-tags" ).hide();
+					if ( event.relatedTarget == null ) {
+						//$( "#js-search-tags" ).hide();
+						$( "#js-search-tags" ).empty();
 						$( "#js-search-tags" ).removeClass( "w3-show" );
 					}
 				}
 			});
+
+			//$( "#js-search-tags" ).on({ mouseleave: function () { $( this ).removeClass( "w3-show" ); }});
 		});
 	</script>
     {##}

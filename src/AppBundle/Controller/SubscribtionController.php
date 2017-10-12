@@ -28,26 +28,31 @@ class SubscribtionController extends Controller
     public function subscribeAction(Request $request)
     {
 		$email = $request->request->get('email');
-		$categories = $request->request->get('categories');
 		
-		if (!$email
-			|| !$categories) {
+		if (!$email) {
 				
-			$this->addFlash('error', 'Неверно указаны данные!');
+			$this->addFlash('error', 'Неуказана почта!');
 			return $this->redirectToRoute('homepage');
 		}
 		
 		$sub = new Subscriber();
 		$sub->setEmail($email);
-		$sub->setCategoryList($categories);
+
+		$categories = $this->getDoctrine()->getRepository('AppBundle:Category')
+			->findAll();
+		$catsForSubscribtion = [];
+		foreach ($categories as $cat) {
+			$catsForSubscribtion[] = $cat->getId();
+		}
+		$sub->setCategoryList(implode(';', $catsForSubscribtion));
 		
 		try {
 			$manager = $this->getDoctrine()->getManager();
 			$manager->persist($sub);
 			$manager->flush();
-			$this->addFlash('notice', 'Успешно подписаны!');
+			$this->addFlash('notice', 'Успешно подписаны! Управлять списком новостных категорий, на которые Вы подписались, могут только зарегестрированные пользователи.');
 		} catch (\Exception $e) {
-			$this->addFlash('error', 'Упс... Что-то пошло не так! Попробуйте еще раз.');
+			$this->addFlash('error', 'Упс... Что-то пошло не так! Попробуйте еще раз. Возможно данный эл. адресс уже подписан.');
 		}
 		
 		return $this->redirectToRoute('homepage');

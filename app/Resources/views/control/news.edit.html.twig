@@ -172,61 +172,70 @@
 $( document ).ready( function()
 {
     function handleSuccess( response )
-	{
-        var data = JSON.parse( response.data );
+    {
+	var data = JSON.parse( response.data );
+	$( "#js-icon-wait" ).hide();
+	$( "#js-icon-fail" ).hide();
+	$( "#js-progress-close" ).show();
+	$( "#js-icon-success" ).show();
+	$( "#js-id" ).text( data.newsId );
 		
-		// alert("Отправлено!\n");
-		$( "#js-icon-wait" ).hide();
-		$( "#js-icon-fail" ).hide();
-		$( "#js-progress-close" ).show();
-		$( "#js-icon-success" ).show();
-		$( "#js-id" ).text( data.newsId );
-		
-		var container = $( "#js-progress-msg" );
-		container.empty();
-		container.text( "Сохранено!" );
+	var container = $( "#js-progress-msg" );
+	container.empty();
+	container.text( "Сохранено!" );
     }
     
-    function handleFail( response )
-	{
-		var data = JSON.parse( response.data );
+    function handleSavingFail()
+    {		
+	$( "#js-icon-wait" ).hide();
+	$( "#js-icon-success" ).hide();
+	$( "#js-progress-close" ).show();
+	$( "#js-icon-fail" ).show();
 		
-		$( "#js-icon-wait" ).hide();
-		$( "#js-icon-success" ).hide();
-		$( "#js-progress-close" ).show();
-		$( "#js-icon-fail" ).show();
-		
-		var container = $( "#js-progress-msg" );
-		container.empty();
-		container.text( data.errorMsg );
+	var container = $( "#js-progress-msg" );
+	container.empty();
+	container.text( "Ошибка при сохранении" );
     }
     
-	function showProgress()
-	{
-		$( "#js-progress-close" ).hide();
-		$( "#js-icon-success" ).hide();
-		$( "#js-icon-fail" ).hide();
-		$( "#js-progress-msg" ).text( "Подождите..." );
-		$( "#js-progress" ).show();
-	}
+    function handleFail()
+    {
+	$( "#js-icon-wait" ).hide();
+	$( "#js-icon-success" ).hide();
+	$( "#js-progress-close" ).show();
+	$( "#js-icon-fail" ).show(); 
+
+	var container = $( "#js-progress-msg" );
+	container.empty();
+	container.text( "Неверные данные!" );
+    }
+
+    function showProgress()
+    {
+	$( "#js-progress-close" ).hide();
+	$( "#js-icon-success" ).hide();
+	$( "#js-icon-fail" ).hide();
+	$( "#js-progress-msg" ).text( "Подождите..." );
+	$( "#js-progress" ).show();
+    }
 	
-	function badData( msg ) {
-		$( "#js-icon-wait" ).hide();
-		$( "#js-icon-success" ).hide();
-		$( "#js-progress-close" ).show();
-		$( "#js-icon-fail" ).show();
+    function badData( msg ) 
+    {
+	$( "#js-icon-wait" ).hide();
+	$( "#js-icon-success" ).hide();
+	$( "#js-progress-close" ).show();
+	$( "#js-icon-fail" ).show();
 	
-		var container = $( "#js-progress-msg" );
-		//container.text( '' );
-		container.empty();
-		container.append( msg );
-	}
+	var container = $( "#js-progress-msg" );
+	//container.text( '' );
+	container.empty();
+	container.append( msg );
+    }
 	
     $( "#js-save" ).click( function() {
-		showProgress();
+	showProgress();
 	
-		var canSave = true;
-		var progressMsg = '';
+	var canSave = true;
+	var progressMsg = '';
 	
         var data = {
             id: 0,
@@ -250,30 +259,30 @@ $( document ).ready( function()
         var categoryId = parseInt( $( "#js-categories" ).val() );
         if (categoryId < 1) {
             progressMsg += "<p>Укажите категорию новости.</p>";
-			canSave = false;
+	    canSave = false;
         }
         
         var authorId = parseInt( $( "#js-authorid" ).text() );
         var created = $( "#js-created" ).text();
         
-		var titleImage = $( "#js-image-src" ).val().trim();
+	var titleImage = $( "#js-image-src" ).val().trim();
 		
         var content = $( "#js-content" ).val().trim();
         if (content.length < 24) {
             progressMsg += "<p>Текст статьи содержит меньше 24 символов.</p>";
-			canSave = false;
+	    canSave = false;
         }
         
         var tagSet = $( "#js-tagset" ).val().trim();
         if (tagSet.split(";").length >= 8) {
             progressMsg += "<p>Количество тегов должно быть от 1 до 8</p>";
-			canSave = false;
+	    canSave = false;
         }
 		
-		if ( canSave === false ) {
-			badData( progressMsg );
-			return;
-		}
+	if ( canSave === false ) {
+	    badData( progressMsg );
+            return;
+	}
         
         // fill in post data
         data.id = (isNaN(id)) ? 0 : id;
@@ -287,7 +296,7 @@ $( document ).ready( function()
         
         // set json data
         data = "data=" + JSON.stringify(data);
-        console.log(data);
+        //console.log(data);
         
         // send data
         $.ajax({
@@ -296,7 +305,8 @@ $( document ).ready( function()
                 data: data,
                 statusCode: {
                     200: handleSuccess,
-                    400: handleFail
+                    400: handleFail,
+		    500: handleSavingFail
                 }
             });
     });
@@ -366,15 +376,20 @@ $( document ).ready( function()
     $( "#js-tagcloud li" ).on({
         click: function() {
             if ($( "#js-tagset" ).val().indexOf($( this ).text()) == -1) {
-                $( "#js-tagset" ).val( $( "#js-tagset" ).val() + ";" + $( this ).text() );
+		var delim = "";
+		$( "#js-tagset" ).val().trim();
+		if ( $( "#js-tagset" ).val().length > 0 ) {
+			delim = ";";
+		}
+                $( "#js-tagset" ).val( $( "#js-tagset" ).val() + delim + $( this ).text() );
                 $( "#js-tagcloud" ).removeClass("w3-show");
             }
         }
     });
 	
-	$( "#js-image-src" ).change( function() {
+    $( "#js-image-src" ).change( function() {
         $( "#js-selected-image" ).attr( "src", $( "#js-image-src" ).val().trim());
-	});
+    });
 });
 </script>
 {% endblock %}

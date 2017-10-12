@@ -68,4 +68,9 @@ class Uploader
 		file_put_contents($fileName, $fileContent);
 		return $fileName;
 	}
+	
+	public function setTargetDir($td)
+	{
+		$this->targetDir = $td;
+	}
 }
